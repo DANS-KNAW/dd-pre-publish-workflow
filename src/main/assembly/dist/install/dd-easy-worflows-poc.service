@@ -1,0 +1,18 @@
+[Unit]
+Description=DD Easy Worflows Poc Service
+
+[Service]
+ExecStart=/bin/java \
+   $INITIAL_HEAP_SIZE \
+   -Dlogback.configurationFile=/etc/opt/dans.knaw.nl/dd-easy-worflows-poc/logback-service.xml \
+   -Dapp.home=/opt/dans.knaw.nl/dd-easy-worflows-poc \
+   -Dorg.scalatra.environment="production" \
+   -jar /opt/dans.knaw.nl/dd-easy-worflows-poc/bin/dd-easy-worflows-poc.jar run-service
+# Java returns 143 even if the SIGTERM was handled correctly.
+SuccessExitStatus=143
+
+User=dd-easy-worflows-poc
+Group=dd-easy-worflows-poc
+
+[Install]
+WantedBy=multi-user.target
