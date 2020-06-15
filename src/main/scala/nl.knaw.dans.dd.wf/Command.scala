@@ -30,14 +30,14 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val app = new DdEasyWorflowsPocApp(configuration)
+  val app = new DdEasyWorkflowsPocApp(configuration)
 
   runSubcommand(app)
     .doIfSuccess(msg => println(s"OK: $msg"))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
 
-  private def runSubcommand(app: DdEasyWorflowsPocApp): Try[FeedBackMessage] = {
+  private def runSubcommand(app: DdEasyWorkflowsPocApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
 //      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
@@ -47,9 +47,9 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }
 
-  private def runAsService(app: DdEasyWorflowsPocApp): Try[FeedBackMessage] = Try {
-    val service = new DdEasyWorflowsPocService(configuration.serverPort, Map(
-      "/" -> new DdEasyWorflowsPocServlet(app, configuration.version),
+  private def runAsService(app: DdEasyWorkflowsPocApp): Try[FeedBackMessage] = Try {
+    val service = new DdEasyWorkflowsPocService(configuration.serverPort, Map(
+      "/" -> new DdEasyWorkflowsPocServlet(app, configuration.version),
     ))
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {

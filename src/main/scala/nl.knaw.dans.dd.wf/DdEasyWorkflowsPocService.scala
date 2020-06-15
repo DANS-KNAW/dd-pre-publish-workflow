@@ -24,8 +24,8 @@ import org.scalatra.servlet.ScalatraListener
 
 import scala.util.Try
 
-class DdEasyWorflowsPocService(serverPort: Int,
-                         servlets: Map[String, ScalatraServlet]) extends DebugEnhancedLogging {
+class DdEasyWorkflowsPocService(serverPort: Int,
+                                servlets: Map[String, ScalatraServlet]) extends DebugEnhancedLogging {
 
   private val server = new Server(serverPort) {
     setHandler(

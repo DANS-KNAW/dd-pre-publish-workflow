@@ -16,13 +16,22 @@
 package nl.knaw.dans.dd.wf
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.json4s.native.JsonMethods
 import org.scalatra._
 
-class DdEasyWorflowsPocServlet(app: DdEasyWorflowsPocApp,
-                         version: String) extends ScalatraServlet with DebugEnhancedLogging {
+class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
+                                version: String) extends ScalatraServlet with DebugEnhancedLogging {
 
   get("/") {
     contentType = "text/plain"
     Ok(s"DD Easy Worflows Poc Service running ($version)")
+  }
+
+  post("/workflow") {
+    contentType = "application/json"
+    val requestBodyJson = JsonMethods.parse(request.body)
+    val invocationId = (requestBodyJson \ "invocationId").extract[String]
+    val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+    app.doWorkflow(invocationId, datasetIdentifier)
   }
 }

@@ -15,6 +15,10 @@
  */
 package nl.knaw.dans.dd
 
+import org.json4s.DefaultFormats
+
 package object wf {
+
+  implicit val formats = DefaultFormats
 
 }
