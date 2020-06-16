@@ -30,10 +30,10 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
   def getDatasetJson(datasetIdentifier: String): String = {
 
     val datasetJson =
-      Http(s"http://localhost:8080/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
+      Http(s"${configuration.baseUrl}/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
         .header("content-type", "application/json")
         .header("accept", "application/json")
-        .header("X-Dataverse-key", "57ce6d09-6195-4621-a1ed-cd1e3e9f6160")
+        .header("X-Dataverse-key", configuration.apiToken)
         .asString.body
 
     datasetJson
@@ -57,11 +57,11 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
 
   def updateMetadata(datasetIdentifier: String, invocationId: String, metadata: String): Unit = {
 
-    Http(s"http://localhost:8080/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
+    Http(s"${configuration.baseUrl}/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
       .put(metadata)
       .header("content-type", "application/json")
       .header("accept", "application/json")
-      .header("X-Dataverse-key", "57ce6d09-6195-4621-a1ed-cd1e3e9f6160")
+      .header("X-Dataverse-key", configuration.apiToken)
       .asString.headers
 
     //    val ok = new Thread(new Runnable {
@@ -78,11 +78,11 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
       override def run(): Unit = {
         println("Thread resume sleep 4 seconds ")
         Thread.sleep(4000)
-        Http(s"http://localhost:8080/api/workflows/$invocationId")
+        Http(s"${configuration.baseUrl}/api/workflows/$invocationId")
           .postData("")
           .header("content-type", "application/json")
           .header("accept", "application/json")
-          .header("X-Dataverse-key", "57ce6d09-6195-4621-a1ed-cd1e3e9f6160")
+          .header("X-Dataverse-key", configuration.apiToken)
           .asString.headers
       }
     })

@@ -21,6 +21,8 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          serverPort: Int,
+                         baseUrl: String,
+                         apiToken: String,
                          // other configuration properties defined in application.properties
                         )
 
@@ -40,7 +42,10 @@ object Configuration {
     new Configuration(
       version = (home / "bin" / "version").contentAsString.stripLineEnd,
       serverPort = properties.getInt("daemon.http.port"),
+      baseUrl = properties.getString("dataverse.base.url"),
+      apiToken = properties.getString("dataverse.api.token")
       // read other properties defined in application.properties
     )
   }
 }
+

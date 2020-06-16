@@ -26,6 +26,8 @@ class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers {
   private val configuration = Configuration(
     version = "my-version",
     serverPort = 12345,
+    baseUrl = "http:localhost:8080",
+    apiToken = "123456789"
   )
   private val clo = new CommandLineOptions(Array[String](), configuration) {
     // avoids System.exit() in case of invalid arguments or "--help"
