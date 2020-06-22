@@ -1,0 +1,32 @@
+{
+  "name": "update licence",
+  "steps": [
+    {
+      "provider":":internal",
+      "stepType":"log",
+      "parameters": {
+        "message": "Pre-http request"
+      }
+    },
+    {
+      "provider":":internal",
+      "stepType":"http/sr",
+      "parameters": {
+        "url":"http://host.docker.internal:8015/workflow",
+        "method":"POST",
+        "contentType":"application/json",
+        "body":"{\"invocationId\": \"${invocationId}\",\"globalId\": \"${dataset.globalId}\",\"datasetId\": \"${dataset.id}\"}",
+        "expectedResponse":".*",
+        "rollbackUrl":"http://host.docker.internal:8015/workflow",
+        "rollbackMethod":"DELETE"
+      }
+    },
+    {
+      "provider":":internal",
+      "stepType":"log",
+      "parameters": {
+        "message": "Post-http request"
+      }
+    }
+  ]
+}

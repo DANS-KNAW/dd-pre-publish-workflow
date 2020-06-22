@@ -30,7 +30,7 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
   def getDatasetJson(datasetIdentifier: String): String = {
 
     val datasetJson =
-      Http(s"${configuration.baseUrl}/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
+      Http(s"${ configuration.baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
         .header("content-type", "application/json")
         .header("accept", "application/json")
         .header("X-Dataverse-key", configuration.apiToken)
@@ -45,11 +45,20 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
 
     val fields = json \ "metadataBlocks" \ "access-and-license" \ "fields"
     val licenseFromMetadata = (fields(1) \ "value").extract[String]
+    val access = (fields(0) \ "value").extract[String]
 
-    if (!licenseFromMetadata.equalsIgnoreCase("CC0-1.0")) {
+    if (access.equals("Open Access")) {
+      if (!licenseFromMetadata.equalsIgnoreCase("CC0-1.0")) {
+        json = json.transformField {
+          case JField("license", JString(_)) => ("license", JString("NONE"))
+          case JField("termsOfUse", JString(_)) => ("termsOfUse", JString(licenseFromMetadata))
+        }
+      }
+    }
+    else {
       json = json.transformField {
         case JField("license", JString(_)) => ("license", JString("NONE"))
-        case JField("termsOfUse", JString(_)) => ("termsOfUse", JString(licenseFromMetadata))
+        case JField("termsOfUse", JString(_)) => ("termsOfUse", JString("DANS LICENSE"))
       }
     }
     write(json)
@@ -57,37 +66,25 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
 
   def updateMetadata(datasetIdentifier: String, invocationId: String, metadata: String): Unit = {
 
-    Http(s"${configuration.baseUrl}/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
+    Http(s"${ configuration.baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
       .put(metadata)
       .header("content-type", "application/json")
       .header("accept", "application/json")
       .header("X-Dataverse-key", configuration.apiToken)
       .asString.headers
 
-    //    val ok = new Thread(new Runnable {
-    //
-    //      override def run(): Unit = {
-    //        println("Thread OK sleep 2 seconds ")
-    //        Thread.sleep(2000)
-    //        Ok()
-    //      }
-    //    })
 
-    val resume = new Thread(new Runnable {
-
-      override def run(): Unit = {
-        println("Thread resume sleep 4 seconds ")
-        Thread.sleep(4000)
-        Http(s"${configuration.baseUrl}/api/workflows/$invocationId")
-          .postData("")
-          .header("content-type", "application/json")
-          .header("accept", "application/json")
-          .header("X-Dataverse-key", configuration.apiToken)
-          .asString.headers
-      }
+    val resume = new Thread(() => {
+      println("Thread resume sleep 4 seconds ")
+      Thread.sleep(4000)
+      Http(s"${ configuration.baseUrl }/api/workflows/$invocationId")
+        .postData("")
+        .header("content-type", "application/json")
+        .header("accept", "application/json")
+        .header("X-Dataverse-key", configuration.apiToken)
+        .asString.headers
     })
 
-    //ok.start()
     resume.start()
   }
 }
