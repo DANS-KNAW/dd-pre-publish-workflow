@@ -15,16 +15,23 @@
  */
 package nl.knaw.dans.dd.wf
 
-import org.json4s.JsonAST.{ JField, JString }
-import org.json4s.native.JsonMethods
-import org.json4s.native.Serialization.write
+import nl.knaw.dans.dd.wf.queue.ActiveTaskQueue
+import org.json4s.JsonAST.JString
+import org.json4s.native.{ JsonMethods, Serialization }
 import scalaj.http.Http
 
 class DdEasyWorkflowsPocApp(configuration: Configuration) {
-  def doWorkflow(invocationId: String, datasetIdentifier: String): Unit = {
-    val json = getDatasetJson(datasetIdentifier)
-    val updatedJson = updateLicense(json)
-    updateMetadata(datasetIdentifier, invocationId, updatedJson)
+
+  private val resumeTasks = new ActiveTaskQueue()
+
+  def doWorkFlow(invocationId: String, datasetIdentifier: String): Unit = {
+    val metadata = getDatasetJson(datasetIdentifier)
+    val updatedMetadata = populateDataVaultMetadataBlock(metadata)
+    updateMetadata(datasetIdentifier, invocationId, updatedMetadata)
+
+    //resume request to be executed in a different thread
+    resumeTasks.add(ResumeTask(invocationId))
+    resumeTasks.start()
   }
 
   def getDatasetJson(datasetIdentifier: String): String = {
@@ -39,52 +46,35 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
     datasetJson
   }
 
-  def updateLicense(jsonString: String): String = {
+  def populateDataVaultMetadataBlock(jsonString: String): String = {
 
-    var json = JsonMethods.parse(jsonString) \ "data"
+    val urnNbn = mintUrnNbn(jsonString)
+    var json = JsonMethods.parse(jsonString)
 
-    val fields = json \ "metadataBlocks" \ "access-and-license" \ "fields"
-    val licenseFromMetadata = (fields(1) \ "value").extract[String]
-    val access = (fields(0) \ "value").extract[String]
+    json = json.replace("data" :: "metadataBlocks" :: "citation" :: "fields[0]" :: "value"
+      :: Nil, JString(urnNbn))
 
-    if (access.equals("Open Access")) {
-      if (!licenseFromMetadata.equalsIgnoreCase("CC0-1.0")) {
-        json = json.transformField {
-          case JField("license", JString(_)) => ("license", JString("NONE"))
-          case JField("termsOfUse", JString(_)) => ("termsOfUse", JString(licenseFromMetadata))
-        }
-      }
-    }
-    else {
-      json = json.transformField {
-        case JField("license", JString(_)) => ("license", JString("NONE"))
-        case JField("termsOfUse", JString(_)) => ("termsOfUse", JString("DANS LICENSE"))
-      }
-    }
-    write(json)
+    val metadataBlock = json.filterField {
+      case ("metadataBlocks", _) => true
+      case _ => false
+    }.head
+
+    Serialization.writePretty(metadataBlock)
   }
 
-  def updateMetadata(datasetIdentifier: String, invocationId: String, metadata: String): Unit = {
+  def mintUrnNbn(jsonString: String): String = {
+    "testURN:NBN"
+  }
 
-    Http(s"${ configuration.baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
+  def updateMetadata(datasetIdentifier: String, invocationId: String, metadata: String): String = {
+
+    val result = Http(s"${ configuration.baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
       .put(metadata)
       .header("content-type", "application/json")
       .header("accept", "application/json")
       .header("X-Dataverse-key", configuration.apiToken)
-      .asString.headers
+      .asString.body
 
-
-    val resume = new Thread(() => {
-      println("Thread resume sleep 4 seconds ")
-      Thread.sleep(4000)
-      Http(s"${ configuration.baseUrl }/api/workflows/$invocationId")
-        .postData("")
-        .header("content-type", "application/json")
-        .header("accept", "application/json")
-        .header("X-Dataverse-key", configuration.apiToken)
-        .asString.headers
-    })
-
-    resume.start()
+    result
   }
 }

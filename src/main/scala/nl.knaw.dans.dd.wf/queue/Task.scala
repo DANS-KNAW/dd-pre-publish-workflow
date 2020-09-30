@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy
+package nl.knaw.dans.dd.wf.queue
 
-package object wf {
+import scala.util.Try
 
+trait Task {
+  def run(): Try[Unit]
 }

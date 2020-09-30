@@ -27,11 +27,16 @@ class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
     Ok(s"DD Easy Worflows Poc Service running ($version)")
   }
 
-  post("/workflow") {
-    contentType = "application/json"
-    val requestBodyJson = JsonMethods.parse(request.body)
-    val invocationId = (requestBodyJson \ "invocationId").extract[String]
-    val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
-    app.doWorkflow(invocationId, datasetIdentifier)
+  synchronized {
+    post("/workflow") {
+      {
+        contentType = "application/json"
+        val requestBodyJson = JsonMethods.parse(request.body)
+        val invocationId = (requestBodyJson \ "invocationId").extract[String]
+        val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+        app.doWorkFlow(invocationId, datasetIdentifier)
+      }
+    }
+
   }
 }

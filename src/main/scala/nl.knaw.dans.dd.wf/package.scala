@@ -15,10 +15,22 @@
  */
 package nl.knaw.dans.dd
 
+import java.text.DateFormat
+import java.util.{ Calendar, TimeZone }
+
 import org.json4s.DefaultFormats
+
+import scala.concurrent.ExecutionContext
 
 package object wf {
 
   implicit val formats = DefaultFormats
 
+  implicit val context = ExecutionContext.global
+
+  def currentTimestamp: String = {
+    val c = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+    val f = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
+    f.format(c.getTimeInMillis)
+  }
 }
