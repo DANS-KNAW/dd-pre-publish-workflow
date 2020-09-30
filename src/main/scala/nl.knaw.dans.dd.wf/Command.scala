@@ -15,7 +15,6 @@
  */
 package nl.knaw.dans.dd.wf
 
-import better.files.File
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
@@ -26,7 +25,7 @@ import scala.util.{ Failure, Try }
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
 
-  val configuration = Configuration(File(System.getProperty("app.home")))
+  //  val configuration = Configuration(File(System.getProperty("app.home")))
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
@@ -40,8 +39,8 @@ object Command extends App with DebugEnhancedLogging {
   private def runSubcommand(app: DdEasyWorkflowsPocApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
-//      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
-//      case None => // handle command line without subcommands
+        //      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
+        //      case None => // handle command line without subcommands
         case commandLine.runService => runAsService(app)
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))

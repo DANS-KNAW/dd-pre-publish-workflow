@@ -18,36 +18,27 @@ package nl.knaw.dans.dd.wf
 import nl.knaw.dans.dd.wf.queue.ActiveTaskQueue
 import org.json4s.JsonAST.JString
 import org.json4s.native.{ JsonMethods, Serialization }
-import scalaj.http.Http
 
-class DdEasyWorkflowsPocApp(configuration: Configuration) {
+import scala.util.Try
+
+class DdEasyWorkflowsPocApp(configuration: Configuration) extends Http {
 
   private val resumeTasks = new ActiveTaskQueue()
 
   def doWorkFlow(invocationId: String, datasetIdentifier: String): Unit = {
-    val metadata = getDatasetJson(datasetIdentifier)
-    val updatedMetadata = populateDataVaultMetadataBlock(metadata)
-    updateMetadata(datasetIdentifier, invocationId, updatedMetadata)
+
+    for {
+      metadata <- getMetadata(datasetIdentifier)
+      updatedMetadata <- populateDataVaultMetadataBlock(metadata)
+      _ <- updateMetadata(datasetIdentifier, updatedMetadata)
+    } yield ()
 
     //resume request to be executed in a different thread
     resumeTasks.add(ResumeTask(invocationId))
     resumeTasks.start()
   }
 
-  def getDatasetJson(datasetIdentifier: String): String = {
-
-    val datasetJson =
-      Http(s"${ configuration.baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
-        .header("content-type", "application/json")
-        .header("accept", "application/json")
-        .header("X-Dataverse-key", configuration.apiToken)
-        .asString.body
-
-    datasetJson
-  }
-
-  def populateDataVaultMetadataBlock(jsonString: String): String = {
-
+  def populateDataVaultMetadataBlock(jsonString: String): Try[String] = Try {
     val urnNbn = mintUrnNbn(jsonString)
     var json = JsonMethods.parse(jsonString)
 
@@ -64,17 +55,5 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) {
 
   def mintUrnNbn(jsonString: String): String = {
     "testURN:NBN"
-  }
-
-  def updateMetadata(datasetIdentifier: String, invocationId: String, metadata: String): String = {
-
-    val result = Http(s"${ configuration.baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
-      .put(metadata)
-      .header("content-type", "application/json")
-      .header("accept", "application/json")
-      .header("X-Dataverse-key", configuration.apiToken)
-      .asString.body
-
-    result
   }
 }

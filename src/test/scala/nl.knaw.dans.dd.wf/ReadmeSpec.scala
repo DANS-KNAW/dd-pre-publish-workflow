@@ -16,6 +16,7 @@
 package nl.knaw.dans.dd.wf
 
 import java.io.ByteArrayOutputStream
+import java.net.URI
 
 import better.files.File
 import org.scalatest.flatspec.AnyFlatSpec
@@ -26,9 +27,12 @@ class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers {
   private val configuration = Configuration(
     version = "my-version",
     serverPort = 12345,
-    baseUrl = "http:localhost:8080",
-    apiToken = "123456789"
+    apiToken = "123456789",
+    connectionTimeout = 3000,
+    readTimeout = 3000,
+    baseUrl = new URI("http:localhost:8080")
   )
+
   private val clo = new CommandLineOptions(Array[String](), configuration) {
     // avoids System.exit() in case of invalid arguments or "--help"
     override def verify(): Unit = {}

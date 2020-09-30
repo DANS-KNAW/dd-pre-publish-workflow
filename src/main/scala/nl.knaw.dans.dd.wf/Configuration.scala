@@ -15,14 +15,18 @@
  */
 package nl.knaw.dans.dd.wf
 
+import java.net.URI
+
 import better.files.File
 import better.files.File.root
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          serverPort: Int,
-                         baseUrl: String,
                          apiToken: String,
+                         connectionTimeout: Int,
+                         readTimeout: Int,
+                         baseUrl: URI,
                          // other configuration properties defined in application.properties
                         )
 
@@ -42,8 +46,10 @@ object Configuration {
     new Configuration(
       version = (home / "bin" / "version").contentAsString.stripLineEnd,
       serverPort = properties.getInt("daemon.http.port"),
-      baseUrl = properties.getString("dataverse.base.url"),
-      apiToken = properties.getString("dataverse.api.token")
+      apiToken = properties.getString("dataverse.api.token"),
+      connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
+      readTimeout = properties.getInt("dataverse.read-timeout-ms"),
+      baseUrl = new URI(properties.getString("dataverse.base.url")),
       // read other properties defined in application.properties
     )
   }

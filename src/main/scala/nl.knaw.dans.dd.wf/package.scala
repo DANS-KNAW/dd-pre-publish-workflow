@@ -15,9 +15,11 @@
  */
 package nl.knaw.dans.dd
 
+import java.net.URI
 import java.text.DateFormat
 import java.util.{ Calendar, TimeZone }
 
+import better.files.File
 import org.json4s.DefaultFormats
 
 import scala.concurrent.ExecutionContext
@@ -33,4 +35,11 @@ package object wf {
     val f = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
     f.format(c.getTimeInMillis)
   }
+
+  val configuration: Configuration = Configuration(File(System.getProperty("app.home")))
+  implicit protected val connectionTimeout: Int = configuration.connectionTimeout
+  implicit protected val readTimeout: Int = configuration.readTimeout
+  implicit protected val baseUrl: URI = configuration.baseUrl
+  implicit protected val apiToken: String = configuration.apiToken
+  implicit protected val apiVersion: String = configuration.version
 }

@@ -18,11 +18,11 @@ package nl.knaw.dans.dd.wf
 import nl.knaw.dans.dd.wf.queue.Task
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.Formats
-import scalaj.http.Http
 
 import scala.util.Try
 
-case class ResumeTask(invocationId: String)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging {
+case class ResumeTask(invocationId: String)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging with Http {
+
   override def run(): Try[Unit] = {
     trace()
     debug(s"Resume workflow with invocationId: $invocationId")
@@ -30,16 +30,5 @@ case class ResumeTask(invocationId: String)(implicit jsonFormats: Formats) exten
     for {
       _ <- resume(invocationId)
     } yield ()
-  }
-
-  def resume(invocationId: String): Try[String] = Try {
-    val result = Http(s"http://localhost:8080/api/workflows/$invocationId")
-      .postData("")
-      .header("content-type", "application/json")
-      .header("accept", "application/json")
-      .header("X-Dataverse-key", "c21f9076-1ede-44e1-b138-d5fd647119ae")
-      .asString.body
-
-    result
   }
 }

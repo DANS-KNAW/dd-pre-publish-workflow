@@ -34,9 +34,9 @@ class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
         val requestBodyJson = JsonMethods.parse(request.body)
         val invocationId = (requestBodyJson \ "invocationId").extract[String]
         val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+
         app.doWorkFlow(invocationId, datasetIdentifier)
       }
     }
-
   }
 }
