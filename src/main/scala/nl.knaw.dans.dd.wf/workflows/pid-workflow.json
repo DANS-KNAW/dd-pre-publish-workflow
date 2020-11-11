@@ -12,12 +12,12 @@
       "provider":":internal",
       "stepType":"http/sr",
       "parameters": {
-        "url":"http://host.docker.internal:8015/workflow",
+        "url":"http://10.0.2.2:8015/workflow",
         "method":"POST",
         "contentType":"application/json",
-        "body":"{\"invocationId\": \"${invocationId}\",\"globalId\": \"${dataset.globalId}\",\"datasetId\": \"${dataset.id}\"}",
+        "body":"{\"invocationId\": \"${invocationId}\",\"globalId\": \"${dataset.globalId}\",\"datasetId\": \"${dataset.id}\", \"majorVersion\": \"${majorVersion}\", \"minorVersion\": \"${minorVersion}\" }",
         "expectedResponse":".*",
-        "rollbackUrl":"http://host.docker.internal:8015/workflow",
+        "rollbackUrl":"http://10.0.2.2:8015/workflow",
         "rollbackMethod":"DELETE"
       }
     },

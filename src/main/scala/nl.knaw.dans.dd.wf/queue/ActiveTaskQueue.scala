@@ -28,6 +28,7 @@ import scala.concurrent.ExecutionContext
  */
 class ActiveTaskQueue(capacity: Int = 200) extends DebugEnhancedLogging {
   private val executionContext: ExecutionContext = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+  //todo use of queue not necessary
   private val tasks = new LinkedBlockingDeque[Option[Task]](capacity)
 
   /**
@@ -47,7 +48,7 @@ class ActiveTaskQueue(capacity: Int = 200) extends DebugEnhancedLogging {
   def start(): Unit = {
     executionContext.execute(runnable = () => {
       logger.info("thread sleeping..")
-      Thread.sleep(2000)
+      Thread.sleep(3000)
       logger.info("Processing thread ready for running tasks")
       while (runTask(tasks.take())) {}
       logger.info("Finished processing tasks.")

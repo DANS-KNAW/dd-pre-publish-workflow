@@ -101,6 +101,12 @@
             <groupId>org.json4s</groupId>
             <artifactId>json4s-native_2.12</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.json4s/json4s-jackson -->
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.12</artifactId>
+            <version>3.5.3</version>
+        </dependency>
         <dependency>
             <groupId>org.scalaj</groupId>
             <artifactId>scalaj-http_2.12</artifactId>

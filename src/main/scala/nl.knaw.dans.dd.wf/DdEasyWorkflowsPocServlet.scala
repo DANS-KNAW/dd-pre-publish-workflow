@@ -16,8 +16,10 @@
 package nl.knaw.dans.dd.wf
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.native.JsonMethods
+import org.json4s.jackson.JsonMethods
 import org.scalatra._
+
+import scala.util.{ Failure, Success }
 
 class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
                                 version: String) extends ScalatraServlet with DebugEnhancedLogging {
@@ -27,16 +29,19 @@ class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
     Ok(s"DD Easy Worflows Poc Service running ($version)")
   }
 
-  synchronized {
-    post("/workflow") {
-      {
-        contentType = "application/json"
-        val requestBodyJson = JsonMethods.parse(request.body)
-        val invocationId = (requestBodyJson \ "invocationId").extract[String]
-        val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+  post("/workflow") {
+    contentType = "application/json"
+    val requestBodyJson = JsonMethods.parse(request.body)
+    //Todo extract directly from request body -> JsonMethods.parse(request.body).extract[WorkFlowVariables]
+    val invocationId = (requestBodyJson \ "invocationId").extract[String]
+    val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+    val majorVersion = (requestBodyJson \ "majorVersion").extract[String]
+    val minorVersion = (requestBodyJson \ "minorVersion").extract[String]
+    val workflowVariables = WorkFlowVariables(invocationId, datasetIdentifier, majorVersion, minorVersion)
 
-        app.doWorkFlow(invocationId, datasetIdentifier)
-      }
+    app.doWorkFlow(workflowVariables) match {
+      case Success(_) => Ok
+      case Failure(_) => InternalServerError
     }
   }
 }

@@ -15,45 +15,45 @@
  */
 package nl.knaw.dans.dd.wf
 
+import nl.knaw.dans.dd.wf.json.{ DatasetVersion, MetadataBlock }
 import nl.knaw.dans.dd.wf.queue.ActiveTaskQueue
-import org.json4s.JsonAST.JString
-import org.json4s.native.{ JsonMethods, Serialization }
+import org.json4s.JsonAST.JValue
+import org.json4s.jackson.{ JsonMethods, Serialization }
 
-import scala.util.Try
+import scala.util.{ Success, Try }
 
 class DdEasyWorkflowsPocApp(configuration: Configuration) extends Http {
 
   private val resumeTasks = new ActiveTaskQueue()
+  val mapper = new DansDataVaultMetadataBlockMapper
 
-  def doWorkFlow(invocationId: String, datasetIdentifier: String): Unit = {
+  def doWorkFlow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
 
-    for {
-      metadata <- getMetadata(datasetIdentifier)
-      updatedMetadata <- populateDataVaultMetadataBlock(metadata)
-      _ <- updateMetadata(datasetIdentifier, updatedMetadata)
-    } yield ()
+    //todo use Try in for-comprehension
 
+    // for {
+    val metadata = getMetadata(workFlowVariables.pid)
+    val metadata2Json = JsonMethods.parse(metadata)
+    val datasetVersion = parseDatasetVersion(metadata2Json)
+    val vaultBlock = mapper.populateDataVaultBlock(datasetVersion, workFlowVariables)
+    val datasetUpdated = addBlockToMetadata(datasetVersion, vaultBlock)
+    val updatedJsonString = Serialization.writePretty(datasetUpdated)
+    updateMetadata(workFlowVariables.pid, updatedJsonString)
+    //    //} yield ()
     //resume request to be executed in a different thread
-    resumeTasks.add(ResumeTask(invocationId))
+    resumeTasks.add(ResumeTask(workFlowVariables.invocationId))
     resumeTasks.start()
+
+    Success()
   }
 
-  def populateDataVaultMetadataBlock(jsonString: String): Try[String] = Try {
-    val urnNbn = mintUrnNbn(jsonString)
-    var json = JsonMethods.parse(jsonString)
-
-    json = json.replace("data" :: "metadataBlocks" :: "citation" :: "fields[0]" :: "value"
-      :: Nil, JString(urnNbn))
-
-    val metadataBlock = json.filterField {
-      case ("metadataBlocks", _) => true
-      case _ => false
-    }.head
-
-    Serialization.writePretty(metadataBlock)
+  def parseDatasetVersion(metadataJson: JValue): DatasetVersion = {
+    val metadataBlock = (metadataJson \\ "metadataBlocks").extract[Map[String, MetadataBlock]]
+    DatasetVersion(metadataBlock)
   }
 
-  def mintUrnNbn(jsonString: String): String = {
-    "testURN:NBN"
+  def addBlockToMetadata(datasetVersion: DatasetVersion, dansVaultMetadata: MetadataBlock): DatasetVersion = {
+    val updatedDatasetVersion = datasetVersion.copy(metadataBlocks = datasetVersion.metadataBlocks + ("dansDataVaultMetadata" -> dansVaultMetadata))
+    updatedDatasetVersion
   }
 }

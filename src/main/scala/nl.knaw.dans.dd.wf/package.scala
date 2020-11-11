@@ -20,15 +20,17 @@ import java.text.DateFormat
 import java.util.{ Calendar, TimeZone }
 
 import better.files.File
-import org.json4s.DefaultFormats
+import org.json4s.{ DefaultFormats, Formats }
 
 import scala.concurrent.ExecutionContext
 
 package object wf {
 
-  implicit val formats = DefaultFormats
+  implicit val jsonFormats: Formats = DefaultFormats + JsonUtils.MetadataFieldSerializer
 
   implicit val context = ExecutionContext.global
+
+  case class WorkFlowVariables(invocationId: String, pid: String, majorVersion: String, minorVersion: String)
 
   def currentTimestamp: String = {
     val c = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
