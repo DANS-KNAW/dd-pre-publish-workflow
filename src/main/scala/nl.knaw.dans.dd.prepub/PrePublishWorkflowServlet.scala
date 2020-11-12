@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.jackson.JsonMethods
 import org.scalatra._
 
@@ -23,6 +24,7 @@ import scala.util.{ Failure, Success }
 
 class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
                                 version: String) extends ScalatraServlet with DebugEnhancedLogging {
+  private implicit val jsonFormats: Formats = DefaultFormats
 
   get("/") {
     contentType = "text/plain"

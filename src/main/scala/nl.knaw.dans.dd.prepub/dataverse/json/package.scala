@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf.dataverse
+package nl.knaw.dans.dd.prepub.dataverse
 
-import better.files.File
 import org.json4s.{ DefaultFormats, Formats }
 
 import scala.collection.mutable

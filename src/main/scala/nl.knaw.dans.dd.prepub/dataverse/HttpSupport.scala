@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf.dataverse
+package nl.knaw.dans.dd.prepub.dataverse
 
 import java.io.FileInputStream
 import java.net.URI
 import java.nio.charset.StandardCharsets
 
 import better.files.File
-import nl.knaw.dans.dd.wf.JsonUtils
-import org.apache.commons.io.FileUtils
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.{ DefaultFormats, Formats }
+import org.apache.commons.io.FileUtils
 import org.json4s.native.{ JsonParser, Serialization }
+import org.json4s.{ DefaultFormats, Formats }
 import scalaj.http.{ Http, HttpResponse, MultiPart }
 
 import scala.util.{ Failure, Success, Try }
 
 trait HttpSupport extends DebugEnhancedLogging {
-  implicit val jsonFormats: Formats = DefaultFormats + JsonUtils.MetadataFieldSerializer
+  implicit val jsonFormats: Formats = DefaultFormats
   protected val connectionTimeout: Int
   protected val readTimeout: Int
   protected val baseUrl: URI

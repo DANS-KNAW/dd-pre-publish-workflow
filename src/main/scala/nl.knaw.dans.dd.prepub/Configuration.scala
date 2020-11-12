@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub
 
 import java.net.URI
 
 import better.files.File
 import better.files.File.root
-import nl.knaw.dans.dd.wf.dataverse.DataverseInstanceConfig
+import nl.knaw.dans.dd.prepub.dataverse.DataverseInstanceConfig
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,

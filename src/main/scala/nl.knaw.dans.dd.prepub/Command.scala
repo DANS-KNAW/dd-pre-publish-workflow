@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub
 
 import better.files.File
 import nl.knaw.dans.lib.error._

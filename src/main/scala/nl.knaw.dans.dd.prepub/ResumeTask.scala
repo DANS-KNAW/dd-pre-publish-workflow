@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub
 
 import java.nio.charset.StandardCharsets
 
-import nl.knaw.dans.dd.wf.dataverse.DataverseInstance
-import nl.knaw.dans.dd.wf.queue.Task
+import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
+import nl.knaw.dans.dd.prepub.queue.Task
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.Formats
-import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods
 
 import scala.util.Try
 
 case class ResumeTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging {
 
-
-
   private def getLocked(lockStatusMessage: LockStatusMessage): Boolean = {
     lockStatusMessage.data.exists(_.lockType == "Workflow")
   }
 
   override def run(): Try[Unit] = Try {
-    trace()
+    trace(())
     var isLocked = false
 
     while (!isLocked) {

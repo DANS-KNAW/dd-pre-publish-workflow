@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf.dataverse
+package nl.knaw.dans.dd
 
-import java.net.URI
+import org.json4s.{ DefaultFormats, Formats }
 
-case class DataverseInstanceConfig(connectionTimeout: Int,
-                                   readTimeout: Int,
-                                   baseUrl: URI,
-                                   apiToken: String,
-                                   apiVersion: String)
+package object prepub {
+  implicit val jsonFormats: Formats = DefaultFormats
+
+  case class WorkFlowVariables(invocationId: String, pid: String, datasetId: String, majorVersion: String, minorVersion: String)
+
+  case class LockRecord(lockType: String, date: String, user: String)
+
+  case class LockStatusMessage(status: String, data: List[LockRecord])
+
+}

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub
 
-import nl.knaw.dans.dd.wf.json._
+import nl.knaw.dans.dd.prepub.json._
 import org.json4s.JObject
 import org.json4s.JsonAST.JArray
 import org.json4s.native.{ JsonMethods, Serialization }

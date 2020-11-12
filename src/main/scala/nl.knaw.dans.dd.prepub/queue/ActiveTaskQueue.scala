@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf.queue
+package nl.knaw.dans.dd.prepub.queue
 
 import java.util.concurrent.{ Executors, LinkedBlockingDeque }
 

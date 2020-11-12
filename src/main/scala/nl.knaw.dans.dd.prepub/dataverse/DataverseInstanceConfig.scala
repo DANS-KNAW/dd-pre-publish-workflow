@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub.dataverse
 
-package object dataverse {
-  case class CommandFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
-}
+import java.net.URI
+
+case class DataverseInstanceConfig(connectionTimeout: Int,
+                                   readTimeout: Int,
+                                   baseUrl: URI,
+                                   apiToken: String,
+                                   apiVersion: String)

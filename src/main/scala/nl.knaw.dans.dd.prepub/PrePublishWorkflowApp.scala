@@ -13,21 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dd.wf
+package nl.knaw.dans.dd.prepub
 
 import java.io.PrintStream
 
-import nl.knaw.dans.dd.wf.dataverse.DataverseInstance
-import nl.knaw.dans.dd.wf.json.{ DatasetVersion, MetadataBlock }
-import nl.knaw.dans.dd.wf.queue.ActiveTaskQueue
+import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
+import nl.knaw.dans.dd.prepub.json.{ DatasetVersion, MetadataBlock }
+import nl.knaw.dans.dd.prepub.queue.ActiveTaskQueue
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.JsonAST.JValue
 import org.json4s.jackson.{ JsonMethods, Serialization }
 
 import scala.util.{ Success, Try }
 
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
+  private implicit val jsonFormats: Formats = DefaultFormats
+
   // TODO: output should not go to stdout
+
   private implicit val resultOutput: PrintStream = Console.out
   private val dataverse = new DataverseInstance(configuration.dataverse)
 
@@ -49,6 +53,6 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
     debug(s"result = $result")
     resumeTasks.add(ResumeTask(workFlowVariables, dataverse))
     debug("workflow finished")
-    Success()
+    Success(())
   }
 }
