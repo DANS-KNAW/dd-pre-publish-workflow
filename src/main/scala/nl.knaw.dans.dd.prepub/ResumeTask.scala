@@ -27,9 +27,6 @@ import scala.util.Try
 
 case class ResumeTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging {
 
-  private def getLocked(lockStatusMessage: LockStatusMessage): Boolean = {
-    lockStatusMessage.data.exists(_.lockType == "Workflow")
-  }
 
   override def run(): Try[Unit] = Try {
     trace(())
@@ -40,7 +37,8 @@ case class ResumeTask(workFlowVariables: WorkFlowVariables, dataverse: Dataverse
       val result = for {
         response <- dataverse.dataset(workFlowVariables.datasetId, isPersistentId = true).getLocks(Some("Workflow"))
         lockStatus <- Try { JsonMethods.parse(new String(response.body, StandardCharsets.UTF_8)).extract[LockStatusMessage] }
-      } yield getLocked(lockStatus)
+      } yield lockStatus.data.nonEmpty
+      debug(s"result = $result")
       isLocked = result.getOrElse(false)
       Thread.sleep(1000)
     }

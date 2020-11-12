@@ -49,9 +49,9 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     val vaultFields = mapper.createDataVaultFields()
     debug("Trying to update metadata...")
-    val result = dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields))
+    val result = dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields), replace = true)
     debug(s"result = $result")
-    resumeTasks.add(ResumeTask(workFlowVariables, dataverse))
+    //resumeTasks.add(ResumeTask(workFlowVariables, dataverse))
     debug("workflow finished")
     Success(())
   }
