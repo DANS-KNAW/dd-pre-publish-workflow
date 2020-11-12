@@ -15,14 +15,22 @@
  */
 package nl.knaw.dans.dd.wf
 
+import java.io.PrintStream
+
+import nl.knaw.dans.dd.wf.dataverse.DataverseInstance
 import nl.knaw.dans.dd.wf.json.{ DatasetVersion, MetadataBlock }
 import nl.knaw.dans.dd.wf.queue.ActiveTaskQueue
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.JsonAST.JValue
 import org.json4s.jackson.{ JsonMethods, Serialization }
 
 import scala.util.{ Success, Try }
 
-class DdEasyWorkflowsPocApp(configuration: Configuration) extends Http {
+class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
+  // TODO: output should not go to stdout
+  private implicit val resultOutput: PrintStream = Console.out
+  private val dataverse = new DataverseInstance(configuration.dataverse)
+
   val mapper = new DansDataVaultMetadataBlockMapper
   private val resumeTasks = new ActiveTaskQueue()
 
@@ -34,26 +42,13 @@ class DdEasyWorkflowsPocApp(configuration: Configuration) extends Http {
     resumeTasks.stop()
   }
 
-
-  def doWorkFlow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
-    val vaultFields = mapper.populateDataVaultBlock()
+  def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
+    val vaultFields = mapper.createDataVaultFields()
     debug("Trying to update metadata...")
-    val result = editMetadata(workFlowVariables.pid, Serialization.writePretty(vaultFields))
+    val result = dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields))
     debug(s"result = $result")
-    resumeTasks.add(ResumeTask(workFlowVariables))
+    resumeTasks.add(ResumeTask(workFlowVariables, dataverse))
     debug("workflow finished")
     Success()
-  }
-
-  def parseDatasetVersion(metadataJson: JValue): DatasetVersion = {
-    val metadataBlocks = (metadataJson \\ "metadataBlocks").extract[Map[String, MetadataBlock]]
-//    val citation = metadataBlocks("citation")
-//    val contact = citation \ "fields"
-    DatasetVersion(metadataBlocks)
-  }
-
-  def addBlockToMetadata(datasetVersion: DatasetVersion, dansVaultMetadata: MetadataBlock): DatasetVersion = {
-    val updatedDatasetVersion = datasetVersion.copy(metadataBlocks = datasetVersion.metadataBlocks + ("dansDataVaultMetadata" -> dansVaultMetadata))
-    updatedDatasetVersion
   }
 }

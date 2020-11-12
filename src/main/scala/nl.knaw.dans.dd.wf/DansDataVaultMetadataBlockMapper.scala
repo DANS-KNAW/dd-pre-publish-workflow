@@ -27,10 +27,10 @@ class DansDataVaultMetadataBlockMapper {
   case class EditField(typeName: String, value: String)
   case class EditFields(fields: List[EditField])
 
-
   val vaultFields = new ListBuffer[PrimitiveFieldSingleValue]
 
-  def populateDataVaultBlock(): EditFields = {
+  // TODO: Base on info from workflow
+  def createDataVaultFields(): EditFields = {
     val dansPid = EditField("dansDataversePid", "NBN12345")
     val pidVersion = EditField("dansDataversePidVersion", "2,2")
     EditFields(List(dansPid, pidVersion))

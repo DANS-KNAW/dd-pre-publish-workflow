@@ -21,7 +21,7 @@ import org.scalatra._
 
 import scala.util.{ Failure, Success }
 
-class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
+class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
                                 version: String) extends ScalatraServlet with DebugEnhancedLogging {
 
   get("/") {
@@ -40,7 +40,7 @@ class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
     val minorVersion = (requestBodyJson \ "minorVersion").extract[String]
     val workflowVariables = WorkFlowVariables(invocationId, datasetIdentifier, datasetId, majorVersion, minorVersion)
 
-    app.doWorkFlow(workflowVariables) match {
+    app.handleWorkflow(workflowVariables) match {
       case Success(_) => Ok
       case Failure(_) => InternalServerError //TODO: What handling code is there on the Dataverse side?
     }

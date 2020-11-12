@@ -19,22 +19,19 @@ import java.net.URI
 
 import better.files.File
 import better.files.File.root
+import nl.knaw.dans.dd.wf.dataverse.DataverseInstanceConfig
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          serverPort: Int,
-                         apiToken: String,
-                         connectionTimeout: Int,
-                         readTimeout: Int,
-                         baseUrl: URI,
-                         // other configuration properties defined in application.properties
+                         dataverse: DataverseInstanceConfig
                         )
 
 object Configuration {
 
   def apply(home: File): Configuration = {
     val cfgPath = Seq(
-      root / "etc" / "opt" / "dans.knaw.nl" / "dd-easy-worflows-poc",
+      root / "etc" / "opt" / "dans.knaw.nl" / "dd-pre-publish-workflow",
       home / "cfg")
       .find(_.exists)
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
@@ -46,12 +43,13 @@ object Configuration {
     new Configuration(
       version = (home / "bin" / "version").contentAsString.stripLineEnd,
       serverPort = properties.getInt("daemon.http.port"),
-      apiToken = properties.getString("dataverse.api.token"),
-      connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
-      readTimeout = properties.getInt("dataverse.read-timeout-ms"),
-      baseUrl = new URI(properties.getString("dataverse.base.url")),
-      // read other properties defined in application.properties
-    )
+      dataverse = DataverseInstanceConfig(
+        connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
+        readTimeout = properties.getInt("dataverse.read-timeout-ms"),
+        baseUrl = new URI(properties.getString("dataverse.base-url")),
+        apiToken = properties.getString("dataverse.api-key"),
+        apiVersion = properties.getString("dataverse.api-version")
+      ))
   }
 }
 

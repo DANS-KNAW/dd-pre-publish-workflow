@@ -15,6 +15,9 @@
  */
 package nl.knaw.dans.dd.wf
 
+import java.nio.charset.StandardCharsets
+
+import nl.knaw.dans.dd.wf.dataverse.DataverseInstance
 import nl.knaw.dans.dd.wf.queue.Task
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.Formats
@@ -23,7 +26,7 @@ import org.json4s.native.JsonMethods
 
 import scala.util.Try
 
-case class ResumeTask(workFlowVariables: WorkFlowVariables)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging with Http {
+case class ResumeTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging {
 
 
 
@@ -38,13 +41,13 @@ case class ResumeTask(workFlowVariables: WorkFlowVariables)(implicit jsonFormats
     while (!isLocked) {
       debug("Requesting lock-status...")
       val result = for {
-        response <- checkLocked(workFlowVariables.datasetId)
-        lockStatus <- Try { JsonMethods.parse(response).extract[LockStatusMessage] }
+        response <- dataverse.dataset(workFlowVariables.datasetId, isPersistentId = true).getLocks(Some("Workflow"))
+        lockStatus <- Try { JsonMethods.parse(new String(response.body, StandardCharsets.UTF_8)).extract[LockStatusMessage] }
       } yield getLocked(lockStatus)
       isLocked = result.getOrElse(false)
       Thread.sleep(1000)
     }
     debug("Trying to unlock...")
-    resume(workFlowVariables.invocationId)
+    dataverse.workflows().resume(workFlowVariables.invocationId)
   }
 }

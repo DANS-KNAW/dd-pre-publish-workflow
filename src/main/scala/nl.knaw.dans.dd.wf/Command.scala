@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dd.wf
 
+import better.files.File
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
@@ -25,18 +26,18 @@ import scala.util.{ Failure, Try }
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
 
-  //  val configuration = Configuration(File(System.getProperty("app.home")))
+  val configuration = Configuration(File(System.getProperty("app.home")))
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val app = new DdEasyWorkflowsPocApp(configuration)
+  val app = new PrePublishWorkflowApp(configuration)
 
   runSubcommand(app)
     .doIfSuccess(msg => println(s"OK: $msg"))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
 
-  private def runSubcommand(app: DdEasyWorkflowsPocApp): Try[FeedBackMessage] = {
+  private def runSubcommand(app: PrePublishWorkflowApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
         //      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
@@ -46,9 +47,9 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }
 
-  private def runAsService(app: DdEasyWorkflowsPocApp): Try[FeedBackMessage] = Try {
-    val service = new DdEasyWorkflowsPocService(configuration.serverPort, Map(
-      "/" -> new DdEasyWorkflowsPocServlet(app, configuration.version),
+  private def runAsService(app: PrePublishWorkflowApp): Try[FeedBackMessage] = Try {
+    val service = new PrePublishWorkflowService(configuration.serverPort, Map(
+      "/" -> new PrePublishWorkflowServlet(app, configuration.version),
     ))
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {

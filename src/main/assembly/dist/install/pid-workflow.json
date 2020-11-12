@@ -1,13 +1,6 @@
 {
-  "name": "update licence",
+  "name": "Update Data Vault Metadata",
   "steps": [
-    {
-      "provider":":internal",
-      "stepType":"log",
-      "parameters": {
-        "message": "Pre-http request"
-      }
-    },
     {
       "provider":":internal",
       "stepType":"http/sr",
@@ -19,13 +12,6 @@
         "expectedResponse":".*",
         "rollbackUrl":"http://10.0.2.2:8015/workflow",
         "rollbackMethod":"DELETE"
-      }
-    },
-    {
-      "provider":":internal",
-      "stepType":"log",
-      "parameters": {
-        "message": "Post-http request"
       }
     }
   ]

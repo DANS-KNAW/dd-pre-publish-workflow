@@ -36,16 +36,10 @@ package object wf {
 
   case class LockStatusMessage(status: String, data: List[LockRecord])
 
-  def currentTimestamp: String = {
-    val c = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-    val f = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
-    f.format(c.getTimeInMillis)
-  }
-
-  val configuration: Configuration = Configuration(File(System.getProperty("app.home")))
-  implicit protected val connectionTimeout: Int = configuration.connectionTimeout
-  implicit protected val readTimeout: Int = configuration.readTimeout
-  implicit protected val baseUrl: URI = configuration.baseUrl
-  implicit protected val apiToken: String = configuration.apiToken
-  implicit protected val apiVersion: String = configuration.version
+//  val configuration: Configuration = Configuration(File(System.getProperty("app.home")))
+//  implicit protected val connectionTimeout: Int = configuration.connectionTimeout
+//  implicit protected val readTimeout: Int = configuration.readTimeout
+//  implicit protected val baseUrl: URI = configuration.baseUrl
+//  implicit protected val apiToken: String = configuration.apiToken
+//  implicit protected val apiVersion: String = configuration.version
 }

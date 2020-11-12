@@ -27,10 +27,7 @@ class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers {
   private val configuration = Configuration(
     version = "my-version",
     serverPort = 12345,
-    apiToken = "123456789",
-    connectionTimeout = 3000,
-    readTimeout = 3000,
-    baseUrl = new URI("http:localhost:8080")
+    dataverse = null
   )
 
   private val clo = new CommandLineOptions(Array[String](), configuration) {
