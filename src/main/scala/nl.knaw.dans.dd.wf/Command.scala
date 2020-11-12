@@ -53,10 +53,11 @@ object Command extends App with DebugEnhancedLogging {
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {
         service.stop()
+        app.stop()
         service.destroy()
       }
     })
-
+    app.start()
     service.start()
     Thread.currentThread.join()
     "Service terminated normally."

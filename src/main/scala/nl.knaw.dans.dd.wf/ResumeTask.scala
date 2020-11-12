@@ -18,17 +18,33 @@ package nl.knaw.dans.dd.wf
 import nl.knaw.dans.dd.wf.queue.Task
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.Formats
+import org.json4s.jackson.Serialization
+import org.json4s.native.JsonMethods
 
 import scala.util.Try
 
-case class ResumeTask(invocationId: String)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging with Http {
+case class ResumeTask(workFlowVariables: WorkFlowVariables)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging with Http {
 
-  override def run(): Try[Unit] = {
+
+
+  private def getLocked(lockStatusMessage: LockStatusMessage): Boolean = {
+    lockStatusMessage.data.exists(_.lockType == "Workflow")
+  }
+
+  override def run(): Try[Unit] = Try {
     trace()
-    debug(s"Resume workflow with invocationId: $invocationId")
+    var isLocked = false
 
-    for {
-      _ <- resume(invocationId)
-    } yield ()
+    while (!isLocked) {
+      debug("Requesting lock-status...")
+      val result = for {
+        response <- checkLocked(workFlowVariables.datasetId)
+        lockStatus <- Try { JsonMethods.parse(response).extract[LockStatusMessage] }
+      } yield getLocked(lockStatus)
+      isLocked = result.getOrElse(false)
+      Thread.sleep(1000)
+    }
+    debug("Trying to unlock...")
+    resume(workFlowVariables.invocationId)
   }
 }

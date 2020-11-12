@@ -16,18 +16,24 @@
 package nl.knaw.dans.dd.wf
 
 import nl.knaw.dans.dd.wf.json._
+import org.json4s.JObject
+import org.json4s.JsonAST.JArray
+import org.json4s.native.{ JsonMethods, Serialization }
 
 import scala.collection.mutable.ListBuffer
 
 class DansDataVaultMetadataBlockMapper {
 
+  case class EditField(typeName: String, value: String)
+  case class EditFields(fields: List[EditField])
+
+
   val vaultFields = new ListBuffer[PrimitiveFieldSingleValue]
 
-  //Todo implement mapping logic
-  def populateDataVaultBlock(datasetVersion: DatasetVersion, workFlowVariables: WorkFlowVariables): MetadataBlock = {
-    val dansPid = PrimitiveFieldSingleValue("dansDataversePid", false, "primitive", "NBN12345")
-    val pidVersion = PrimitiveFieldSingleValue("dansDataversePidVersion", false, "primitive", "2,2")
-    MetadataBlock("Data Vault Metadata", List(dansPid, pidVersion))
+  def populateDataVaultBlock(): EditFields = {
+    val dansPid = EditField("dansDataversePid", "NBN12345")
+    val pidVersion = EditField("dansDataversePidVersion", "2,2")
+    EditFields(List(dansPid, pidVersion))
   }
 
   def mintUrnNbn(): String = {

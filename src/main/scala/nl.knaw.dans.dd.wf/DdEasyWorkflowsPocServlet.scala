@@ -32,16 +32,17 @@ class DdEasyWorkflowsPocServlet(app: DdEasyWorkflowsPocApp,
   post("/workflow") {
     contentType = "application/json"
     val requestBodyJson = JsonMethods.parse(request.body)
-    //Todo extract directly from request body -> JsonMethods.parse(request.body).extract[WorkFlowVariables]
+    //TODO: extract directly from request body -> JsonMethods.parse(request.body).extract[WorkFlowVariables]
     val invocationId = (requestBodyJson \ "invocationId").extract[String]
     val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+    val datasetId = (requestBodyJson \ "datasetId").extract[String]
     val majorVersion = (requestBodyJson \ "majorVersion").extract[String]
     val minorVersion = (requestBodyJson \ "minorVersion").extract[String]
-    val workflowVariables = WorkFlowVariables(invocationId, datasetIdentifier, majorVersion, minorVersion)
+    val workflowVariables = WorkFlowVariables(invocationId, datasetIdentifier, datasetId, majorVersion, minorVersion)
 
     app.doWorkFlow(workflowVariables) match {
       case Success(_) => Ok
-      case Failure(_) => InternalServerError
+      case Failure(_) => InternalServerError //TODO: What handling code is there on the Dataverse side?
     }
   }
 }

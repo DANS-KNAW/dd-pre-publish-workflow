@@ -23,33 +23,33 @@ import org.json4s.jackson.{ JsonMethods, Serialization }
 import scala.util.{ Success, Try }
 
 class DdEasyWorkflowsPocApp(configuration: Configuration) extends Http {
-
-  private val resumeTasks = new ActiveTaskQueue()
   val mapper = new DansDataVaultMetadataBlockMapper
+  private val resumeTasks = new ActiveTaskQueue()
+
+  def start(): Unit = {
+    resumeTasks.start()
+  }
+
+  def stop(): Unit = {
+    resumeTasks.stop()
+  }
+
 
   def doWorkFlow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
-
-    //todo use Try in for-comprehension
-
-    // for {
-    val metadata = getMetadata(workFlowVariables.pid)
-    val metadata2Json = JsonMethods.parse(metadata)
-    val datasetVersion = parseDatasetVersion(metadata2Json)
-    val vaultBlock = mapper.populateDataVaultBlock(datasetVersion, workFlowVariables)
-    val datasetUpdated = addBlockToMetadata(datasetVersion, vaultBlock)
-    val updatedJsonString = Serialization.writePretty(datasetUpdated)
-    updateMetadata(workFlowVariables.pid, updatedJsonString)
-    //    //} yield ()
-    //resume request to be executed in a different thread
-    resumeTasks.add(ResumeTask(workFlowVariables.invocationId))
-    resumeTasks.start()
-
+    val vaultFields = mapper.populateDataVaultBlock()
+    debug("Trying to update metadata...")
+    val result = editMetadata(workFlowVariables.pid, Serialization.writePretty(vaultFields))
+    debug(s"result = $result")
+    resumeTasks.add(ResumeTask(workFlowVariables))
+    debug("workflow finished")
     Success()
   }
 
   def parseDatasetVersion(metadataJson: JValue): DatasetVersion = {
-    val metadataBlock = (metadataJson \\ "metadataBlocks").extract[Map[String, MetadataBlock]]
-    DatasetVersion(metadataBlock)
+    val metadataBlocks = (metadataJson \\ "metadataBlocks").extract[Map[String, MetadataBlock]]
+//    val citation = metadataBlocks("citation")
+//    val contact = citation \ "fields"
+    DatasetVersion(metadataBlocks)
   }
 
   def addBlockToMetadata(datasetVersion: DatasetVersion, dansVaultMetadata: MetadataBlock): DatasetVersion = {

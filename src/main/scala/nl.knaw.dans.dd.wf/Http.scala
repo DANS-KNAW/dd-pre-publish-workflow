@@ -16,7 +16,7 @@
 package nl.knaw.dans.dd.wf
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import scalaj.http.{ Http, HttpOptions }
+import scalaj.http.{ Http, HttpOptions, HttpResponse }
 
 import scala.util.Try
 
@@ -33,7 +33,7 @@ trait Http extends DebugEnhancedLogging {
       .header("content-type", "application/json")
       .header("accept", "application/json")
       .header("X-Dataverse-key", apiToken)
-      //todo: fix unsafe ssl
+      //TODO: fix unsafe ssl
       .option(HttpOptions.allowUnsafeSSL)
       .asString.body
 
@@ -44,24 +44,62 @@ trait Http extends DebugEnhancedLogging {
     debug(s"Update metadata")
     val result = Http(s"${ baseUrl }/api/datasets/:persistentId/versions/:draft?persistentId=$datasetIdentifier")
       .put(metadata)
-      .header("content-type", "application/json")
-      .header("accept", "application/json")
+      .header("Content-Type", "application/json")
+      .header("Accept", "application/json")
       .header("X-Dataverse-key", apiToken)
       .option(HttpOptions.allowUnsafeSSL)
-      .asString.headers.toSet.toString()
-
-    result
+      .asString
+    debugResponse(result)
+    result.toString
   }
+
+  def editMetadata(datasetIdentifier: String, metadata: String): Try[String] = Try {
+    debug(s"Update metadata")
+    debug(metadata)
+    val result = Http(s"${ baseUrl }/api/datasets/:persistentId/editMetadata/?persistentId=$datasetIdentifier")
+      .put(metadata)
+      .header("Content-Type", "application/json")
+      .header("Accept", "application/json")
+      .header("X-Dataverse-key", apiToken)
+      .option(HttpOptions.allowUnsafeSSL)
+      .asString
+    debugResponse(result)
+    result.toString
+  }
+
+  def checkLocked(datasetId: String): Try[String] = Try {
+    val result = Http(s"${ baseUrl }/api/datasets/$datasetId/locks")
+      .header("Content-Type", "application/json")
+      .header("Accept", "application/json")
+      .header("X-Dataverse-key", apiToken)
+      .option(HttpOptions.allowUnsafeSSL).asString
+
+    debugResponse(result)
+    result.body
+  }
+
 
   def resume(invocationId: String): Try[String] = Try {
     val result = Http(s"${ baseUrl }/api/workflows/$invocationId")
       .postData("")
-      .header("content-type", "application/json")
-      .header("accept", "application/json")
+      .header("Content-Type", "application/json")
+      .header("Accept", "application/json")
       .header("X-Dataverse-key", apiToken)
       .option(HttpOptions.allowUnsafeSSL)
-      .asString.headers.toString()
+      .asString
+    debugResponse(result)
+    result.toString
+  }
 
-    result
+  private def debugResponse(response: HttpResponse[String]): Unit = {
+    debug(
+      s"""
+         | ${response.statusLine}
+         |
+         | ${response.body}
+         |
+         |""".stripMargin)
   }
 }
+
+

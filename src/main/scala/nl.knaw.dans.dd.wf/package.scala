@@ -30,7 +30,11 @@ package object wf {
 
   implicit val context = ExecutionContext.global
 
-  case class WorkFlowVariables(invocationId: String, pid: String, majorVersion: String, minorVersion: String)
+  case class WorkFlowVariables(invocationId: String, pid: String, datasetId: String, majorVersion: String, minorVersion: String)
+
+  case class LockRecord(lockType: String, date: String, user: String)
+
+  case class LockStatusMessage(status: String, data: List[LockRecord])
 
   def currentTimestamp: String = {
     val c = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
