@@ -27,20 +27,20 @@
     </parent>
 
     <groupId>nl.knaw.dans.dd</groupId>
-    <artifactId>dd-easy-worflows-poc</artifactId>
+    <artifactId>dd-pre-publish-workflow</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <name>DD Easy Worflows Poc</name>
-    <url>https://github.com/DANS-KNAW/dd-easy-worflows-poc</url>
-    <description>PoC for working with Dataverse workflows.</description>
+    <name>Pre-publish workflow handler</name>
+    <url>https://github.com/DANS-KNAW/dd-pre-publish-workflow</url>
+    <description>Handles pre-publish workflow.</description>
     <inceptionYear>2020</inceptionYear>
 
     <properties>
-        <main-class>nl.knaw.dans.dd.wf.Command</main-class>
+        <main-class>nl.knaw.dans.dd.prepub.Command</main-class>
     </properties>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/DANS-KNAW/dd-easy-worflows-poc</developerConnection>
+        <developerConnection>scm:git:https://github.com/DANS-KNAW/dd-pre-publish-workflow</developerConnection>
         <tag>HEAD</tag>
     </scm>
 

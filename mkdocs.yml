@@ -14,13 +14,13 @@
 # limitations under the License.
 #
 
-site_name: dd-easy-worflows-poc
+site_name: dd-pre-publish-workflow
 theme:
   name: dans
   disclaimer: false
 
-repo_name: DANS-KNAW/dd-easy-worflows-poc
-repo_url: https://github.com/DANS-KNAW/dd-easy-worflows-poc
+repo_name: DANS-KNAW/dd-pre-publish-workflow
+repo_url: https://github.com/DANS-KNAW/dd-pre-publish-workflow
 
 nav:
   - Manual: index.md

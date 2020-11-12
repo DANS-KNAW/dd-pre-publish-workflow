@@ -2,20 +2,19 @@ dd-easy-worflows-poc
 ===========
 [![Build Status](https://travis-ci.org/DANS-KNAW/dd-easy-worflows-poc.png?branch=master)](https://travis-ci.org/DANS-KNAW/dd-easy-worflows-poc)
 
-<!-- Remove this comment and extend the descriptions below -->
+Handles pre-publish workflow.
 
 
 SYNOPSIS
 --------
 
-    dd-easy-worflows-poc (synopsis of command line parameters)
-    dd-easy-worflows-poc (... possibly multiple lines for subcommands)
+    dd-pre-publish-workflow run-service
 
 
 DESCRIPTION
 -----------
 
-PoC for working with Dataverse workflows.
+Handles pre-publish workflow.
 
 
 ARGUMENTS

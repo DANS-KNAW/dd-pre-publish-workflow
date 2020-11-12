@@ -20,14 +20,13 @@ import org.rogach.scallop.{ScallopConf, ScallopOption, Subcommand, singleArgConv
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
-  printedName = "dd-easy-worflows-poc"
+  printedName = "dd-pre-publish-workflow"
   version(configuration.version)
   private val SUBCOMMAND_SEPARATOR = "---\n"
-  val description: String = s"""PoC for working with Dataverse workflows."""
+  val description: String = s"""Handles pre-publish workflow."""
   val synopsis: String =
     s"""
-       |  $printedName (synopsis of command line parameters)
-       |  $printedName (... possibly multiple lines for subcommands)""".stripMargin
+       |  $printedName run-service""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
@@ -40,8 +39,6 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |
        |Options:
        |""".stripMargin)
-  //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = app.someProperty)
-
   val runService = new Subcommand("run-service") {
     descr(
       "Starts DD Easy Worflows Poc as a daemon that services HTTP requests")

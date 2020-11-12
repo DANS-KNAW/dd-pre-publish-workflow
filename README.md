@@ -6,13 +6,13 @@ Populates the Dans Data Vault custom metadatablock in a Dataverse pre-publish wo
 SYNOPSIS
 --------
 
-    dd-easy-workflows-poc run-service
+    dd-pre-publish-workflow run-service
 
 
 DESCRIPTION
 -----------
 
-Populates the Dans Data Vault custom metadatablock in a Dataverse pre-publish workflow
+Handles pre-publish workflow.
 
 ARGUMENTS
 ---------
