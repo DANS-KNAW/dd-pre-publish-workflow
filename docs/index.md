@@ -1,6 +1,6 @@
-dd-easy-worflows-poc
+dd-pre-publish-workflow
 ===========
-[![Build Status](https://travis-ci.org/DANS-KNAW/dd-easy-worflows-poc.png?branch=master)](https://travis-ci.org/DANS-KNAW/dd-easy-worflows-poc)
+[![Build Status](https://travis-ci.org/DANS-KNAW/dd-pre-publish-workflow.png?branch=master)](https://travis-ci.org/DANS-KNAW/dd-pre-publish-workflow)
 
 Handles pre-publish workflow.
 
@@ -32,12 +32,12 @@ ARGUMENTS
 EXAMPLES
 --------
 
-    dd-easy-worflows-poc -o value
+    dd-pre-publish-workflow -o value
 
 INSTALLATION AND CONFIGURATION
 ------------------------------
 Currently this project is built as an RPM package for RHEL7/CentOS7 and later. The RPM will install the binaries to
-`/opt/dans.knaw.nl/dd-easy-worflows-poc` and the configuration files to `/etc/opt/dans.knaw.nl/dd-easy-worflows-poc`. 
+`/opt/dans.knaw.nl/dd-pre-publish-workflow` and the configuration files to `/etc/opt/dans.knaw.nl/dd-pre-publish-workflow`. 
 
 To install the module on systems that do not support RPM, you can copy and unarchive the tarball to the target host.
 You will have to take care of placing the files in the correct locations for your system yourself. For instructions
@@ -53,8 +53,8 @@ Prerequisites:
 
 Steps:
     
-    git clone https://github.com/DANS-KNAW/dd-easy-worflows-poc.git
-    cd dd-easy-worflows-poc 
+    git clone https://github.com/DANS-KNAW/dd-pre-publish-workflow.git
+    cd dd-pre-publish-workflow 
     mvn clean install
 
 If the `rpm` executable is found at `/usr/local/bin/rpm`, the build profile that includes the RPM 

@@ -17,5 +17,5 @@
 
 echo -n "Pre-creating log..."
 TEMPDIR=data
-touch $TEMPDIR/dd-easy-worflows-poc.log
+touch $TEMPDIR/dd-pre-publish-workflow.log
 echo "OK"
