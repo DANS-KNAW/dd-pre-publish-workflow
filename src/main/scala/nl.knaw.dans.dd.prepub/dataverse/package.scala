@@ -16,5 +16,5 @@
 package nl.knaw.dans.dd.prepub
 
 package object dataverse {
-  case class CommandFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
+  case class RequestFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
 }

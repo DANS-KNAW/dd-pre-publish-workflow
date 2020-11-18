@@ -125,7 +125,7 @@ trait HttpSupport extends DebugEnhancedLogging {
 
   protected def handleResponse(response: HttpResponse[Array[Byte]], expectedStatus: Int*): Try[Array[Byte]] = {
     trace(expectedStatus)
-    if (!expectedStatus.contains(response.code)) Failure(CommandFailedException(response.code, response.statusLine, new String(response.body)))
+    if (!expectedStatus.contains(response.code)) Failure(RequestFailedException(response.code, response.statusLine, new String(response.body)))
     else Success(response.body)
   }
 

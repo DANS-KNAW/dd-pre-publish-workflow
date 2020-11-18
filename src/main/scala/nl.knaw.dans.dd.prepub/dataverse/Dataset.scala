@@ -51,7 +51,7 @@ class Dataset(id: String, isPersistentId: Boolean, configuration: DataverseInsta
   def exportMetadataTo(format: String): Try[HttpResponse[Array[Byte]]] = {
     trace(format)
     if (isPersistentId) get(s"datasets/export?persistentId=$id&exporter=$format", formatResponseAsJson = false)
-    else Failure(CommandFailedException(501, "Export to metadata is only supported using persistent identifiers. Use the -p option", null))
+    else Failure(RequestFailedException(501, "Export to metadata is only supported using persistent identifiers. Use the -p option", null))
   }
 
   def listFiles(version: Option[String] = None): Try[HttpResponse[Array[Byte]]] = {

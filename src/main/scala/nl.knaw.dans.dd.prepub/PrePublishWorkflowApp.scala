@@ -36,23 +36,10 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
   private val dataverse = new DataverseInstance(configuration.dataverse)
 
   val mapper = new DansDataVaultMetadataBlockMapper
-  private val resumeTasks = new ActiveTaskQueue()
-
-  def start(): Unit = {
-    resumeTasks.start()
-  }
-
-  def stop(): Unit = {
-    resumeTasks.stop()
-  }
 
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     val vaultFields = mapper.createDataVaultFields()
     debug("Trying to update metadata...")
-    val result = dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields), replace = true)
-    debug(s"result = $result")
-    //resumeTasks.add(ResumeTask(workFlowVariables, dataverse))
-    debug("workflow finished")
-    Success(())
+    dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields), replace = true).map(_ => ())
   }
 }
