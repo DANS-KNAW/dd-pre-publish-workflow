@@ -15,10 +15,9 @@
  */
 package nl.knaw.dans.dd.prepub
 
-import nl.knaw.dans.dd.prepub.json._
-import org.json4s.JObject
-import org.json4s.JsonAST.JArray
-import org.json4s.native.{ JsonMethods, Serialization }
+import java.util.UUID
+
+import nl.knaw.dans.dd.prepub.dataverse.json._
 
 import scala.collection.mutable.ListBuffer
 
@@ -30,17 +29,34 @@ class DansDataVaultMetadataBlockMapper {
   val vaultFields = new ListBuffer[PrimitiveFieldSingleValue]
 
   // TODO: Base on info from workflow
-  def createDataVaultFields(): EditFields = {
-    val dansPid = EditField("dansDataversePid", "NBN12345")
-    val pidVersion = EditField("dansDataversePidVersion", "2,2")
-    EditFields(List(dansPid, pidVersion))
+  def createDataVaultFields(workFlowVariables: WorkFlowVariables,
+                            b: Option[String],
+                            n: Option[String],
+                            o: Option[String],
+                            ov: Option[String],
+                            st: Option[String]): EditFields = {
+    val fields = ListBuffer[EditField]()
+    fields.append(EditField("dansDataversePid", workFlowVariables.pid))
+    fields.append(EditField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
+
+    // TODO: How find out if a bagId that is found here is carried over from the previous version or a bagId minted by the SWORD service?
+    //       Compare with bagId of previous version if exists
+    //       if no previous version: filled in bagId means SWORD filled it in
+    //       if previous version: new bagId means SWORD filled it in, the same bagId as in previous version means UI created new draft.
+    fields.append(EditField("dansBagId", b.getOrElse(mintBagId())))
+
+    fields.append(EditField("dansNbn", n.getOrElse(mintUrnNbn())))
+    o.foreach(b => fields.append(EditField("dansOtherId", b)))
+    ov.foreach(b => fields.append(EditField("dansOtherIdVersion", b)))
+    st.foreach(b => fields.append(EditField("dansSwordToken", b)))
+    EditFields(fields.toList)
   }
 
   def mintUrnNbn(): String = {
     "testURN:NBN"
   }
 
-  def isDoi(pid: String): Boolean = {
-    pid.contains("doi")
+  def mintBagId(): String = {
+    s"urn:uuid${ UUID.randomUUID().toString }"
   }
 }

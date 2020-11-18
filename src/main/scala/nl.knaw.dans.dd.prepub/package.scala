@@ -17,8 +17,10 @@ package nl.knaw.dans.dd
 
 import org.json4s.{ DefaultFormats, Formats }
 
+import nl.knaw.dans.dd.prepub.dataverse.json._
+
 package object prepub {
-  implicit val jsonFormats: Formats = DefaultFormats
+  implicit val jsonFormats: Formats = DefaultFormats + MetadataFieldSerializer
 
   case class WorkFlowVariables(invocationId: String, pid: String, datasetId: String, majorVersion: String, minorVersion: String)
 

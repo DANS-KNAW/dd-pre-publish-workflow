@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.dd.prepub.dataverse
 
-import org.json4s.{ DefaultFormats, Formats }
+import org.json4s.{ CustomSerializer, DefaultFormats, Extraction, Formats, JNull, JObject }
 
 import scala.collection.mutable
 
@@ -44,6 +44,23 @@ package object json {
 
     def toJsonObject: JsonObject = fields.toMap
   }
+
+  object MetadataFieldSerializer extends CustomSerializer[Field](format => ( {
+    case jsonObj: JObject =>
+      val multiple = (jsonObj \ "multiple").extract[Boolean]
+      val typeClass = (jsonObj \ "typeClass").extract[String]
+
+      typeClass match {
+        case "primitive" if !multiple => Extraction.extract[PrimitiveFieldSingleValue](jsonObj)
+        case "primitive" => Extraction.extract[PrimitiveFieldMultipleValues](jsonObj)
+        case "controlledVocabulary" if !multiple => Extraction.extract[PrimitiveFieldSingleValue](jsonObj)
+        case "controlledVocabulary" => Extraction.extract[PrimitiveFieldMultipleValues](jsonObj)
+        case "compound" => Extraction.extract[CompoundField](jsonObj)
+      }
+  }, {
+    case null => JNull
+  }
+  ))
 
   case class MetadataBlock(displayName: String, fields: List[Field])
   case class DatasetVersion(metadataBlocks: Map[MetadataBlockName, MetadataBlock])
