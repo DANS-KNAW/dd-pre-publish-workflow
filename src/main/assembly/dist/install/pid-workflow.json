@@ -10,7 +10,7 @@
         "contentType":"application/json",
         "body":"{\"invocationId\": \"${invocationId}\",\"globalId\": \"${dataset.globalId}\",\"datasetId\": \"${dataset.id}\", \"majorVersion\": \"${majorVersion}\", \"minorVersion\": \"${minorVersion}\" }",
         "expectedResponse":".*",
-        "rollbackUrl":"http://10.0.2.2:20210/workflow",
+        "rollbackUrl": "http://10.0.2.2:20210/rollback",
         "rollbackMethod":"DELETE"
       }
     }

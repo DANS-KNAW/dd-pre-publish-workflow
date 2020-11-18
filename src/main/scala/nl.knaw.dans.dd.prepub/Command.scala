@@ -40,8 +40,6 @@ object Command extends App with DebugEnhancedLogging {
   private def runSubcommand(app: PrePublishWorkflowApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
-        //      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
-        //      case None => // handle command line without subcommands
         case commandLine.runService => runAsService(app)
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
@@ -54,11 +52,9 @@ object Command extends App with DebugEnhancedLogging {
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {
         service.stop()
-        app.stop()
         service.destroy()
       }
     })
-    app.start()
     service.start()
     Thread.currentThread.join()
     "Service terminated normally."

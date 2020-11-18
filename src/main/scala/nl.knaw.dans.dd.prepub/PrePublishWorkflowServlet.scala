@@ -15,11 +15,12 @@
  */
 package nl.knaw.dans.dd.prepub
 
+import nl.knaw.dans.dd.prepub.dataverse.RequestFailedException
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.jackson.JsonMethods
+import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra._
-
+import nl.knaw.dans.lib.error._
 import scala.util.{ Failure, Success }
 
 class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
@@ -28,11 +29,12 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
 
   get("/") {
     contentType = "text/plain"
-    Ok(s"DD Easy Worflows Poc Service running ($version)")
+    Ok(s"Pre-publish Workflow Service running ($version)")
   }
 
   post("/workflow") {
     contentType = "application/json"
+    trace(request.body)
     val requestBodyJson = JsonMethods.parse(request.body)
     //TODO: extract directly from request body -> JsonMethods.parse(request.body).extract[WorkFlowVariables]
     val invocationId = (requestBodyJson \ "invocationId").extract[String]
@@ -42,9 +44,24 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
     val minorVersion = (requestBodyJson \ "minorVersion").extract[String]
     val workflowVariables = WorkFlowVariables(invocationId, datasetIdentifier, datasetId, majorVersion, minorVersion)
 
-    app.handleWorkflow(workflowVariables) match {
-      case Success(_) => Ok
-      case Failure(_) => InternalServerError //TODO: What handling code is there on the Dataverse side?
+    app.handleWorkflow(workflowVariables)
+      .doIfSuccess { _ => logger.info("Workflow finished successfully") }
+      .doIfFailure { case e => logger.error("Workflow failed", e) }
+    match{
+      case Success(_) => ServiceUnavailable()
+      /*
+       * The Dataverse code only check if the result is successful (200 or 201) or not, so there is no point in returning a
+       * sophisticated response here.
+       */
+      case Failure(RequestFailedException(_, _, _)) => ServiceUnavailable()
+      case _ => InternalServerError()
     }
   }
+
+  post("/rollback") {
+    contentType = "application/json"
+    trace(request.body)
+    Ok()
+  }
+
 }
