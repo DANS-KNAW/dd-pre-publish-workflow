@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy
+package nl.knaw.dans.dd
 
-package object wf {
+import org.json4s.{ DefaultFormats, Formats }
+
+package object prepub {
+  implicit val jsonFormats: Formats = DefaultFormats
+
+  case class WorkFlowVariables(invocationId: String, pid: String, datasetId: String, majorVersion: String, minorVersion: String)
+
+  case class LockRecord(lockType: String, date: String, user: String)
+
+  case class LockStatusMessage(status: String, data: List[LockRecord])
 
 }

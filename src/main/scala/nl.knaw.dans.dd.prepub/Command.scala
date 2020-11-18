@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.wf
+package nl.knaw.dans.dd.prepub
 
 import better.files.File
 import nl.knaw.dans.lib.error._
@@ -30,34 +30,35 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val app = new EasyWorkflowsPocApp(configuration)
+  val app = new PrePublishWorkflowApp(configuration)
 
   runSubcommand(app)
     .doIfSuccess(msg => println(s"OK: $msg"))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
 
-  private def runSubcommand(app: EasyWorkflowsPocApp): Try[FeedBackMessage] = {
+  private def runSubcommand(app: PrePublishWorkflowApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
-//      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
-//      case None => // handle command line without subcommands
+        //      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
+        //      case None => // handle command line without subcommands
         case commandLine.runService => runAsService(app)
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }
 
-  private def runAsService(app: EasyWorkflowsPocApp): Try[FeedBackMessage] = Try {
-    val service = new EasyWorkflowsPocService(configuration.serverPort, Map(
-      "/" -> new EasyWorkflowsPocServlet(app, configuration.version),
+  private def runAsService(app: PrePublishWorkflowApp): Try[FeedBackMessage] = Try {
+    val service = new PrePublishWorkflowService(configuration.serverPort, Map(
+      "/" -> new PrePublishWorkflowServlet(app, configuration.version),
     ))
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {
         service.stop()
+        app.stop()
         service.destroy()
       }
     })
-
+    app.start()
     service.start()
     Thread.currentThread.join()
     "Service terminated normally."

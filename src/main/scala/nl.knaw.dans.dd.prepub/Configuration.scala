@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.wf
+package nl.knaw.dans.dd.prepub
+
+import java.net.URI
 
 import better.files.File
 import better.files.File.root
+import nl.knaw.dans.dd.prepub.dataverse.DataverseInstanceConfig
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          serverPort: Int,
-                         // other configuration properties defined in application.properties
+                         dataverse: DataverseInstanceConfig
                         )
 
 object Configuration {
 
   def apply(home: File): Configuration = {
     val cfgPath = Seq(
-      root / "etc" / "opt" / "dans.knaw.nl" / "easy-workflows-poc",
+      root / "etc" / "opt" / "dans.knaw.nl" / "dd-pre-publish-workflow",
       home / "cfg")
       .find(_.exists)
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
@@ -40,7 +43,13 @@ object Configuration {
     new Configuration(
       version = (home / "bin" / "version").contentAsString.stripLineEnd,
       serverPort = properties.getInt("daemon.http.port"),
-      // read other properties defined in application.properties
-    )
+      dataverse = DataverseInstanceConfig(
+        connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
+        readTimeout = properties.getInt("dataverse.read-timeout-ms"),
+        baseUrl = new URI(properties.getString("dataverse.base-url")),
+        apiToken = properties.getString("dataverse.api-key"),
+        apiVersion = properties.getString("dataverse.api-version")
+      ))
   }
 }
+

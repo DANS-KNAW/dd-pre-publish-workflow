@@ -40,9 +40,9 @@
             <directory>${project.basedir}/src/main/assembly/dist/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
-                <include>easy-workflows-poc</include>
-                <include>easy-workflows-poc-service-start</include>
-                <include>easy-workflows-poc-initd.sh</include>
+                <include>dd-pre-publish-workflow</include>
+                <include>dd-pre-publish-workflow-service-start</include>
+                <include>dd-pre-publish-workflow-initd.sh</include>
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>

@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.wf
+package nl.knaw.dans.dd.prepub
 
 import org.rogach.scallop.{ScallopConf, ScallopOption, Subcommand, singleArgConverter}
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
-  printedName = "easy-workflows-poc"
+  printedName = "dd-pre-publish-workflow"
   version(configuration.version)
   private val SUBCOMMAND_SEPARATOR = "---\n"
-  val description: String = s"""PoC for working with Dataverse workflows"""
+  val description: String = s"""Handles pre-publish workflow."""
   val synopsis: String =
     s"""
-       |  $printedName run-service
-     """.stripMargin
+       |  $printedName run-service""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
@@ -40,11 +39,9 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |
        |Options:
        |""".stripMargin)
-  //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = app.someProperty)
-
   val runService = new Subcommand("run-service") {
     descr(
-      "Starts EASY Workflows Poc as a daemon that services HTTP requests")
+      "Starts DD Easy Worflows Poc as a daemon that services HTTP requests")
     footer(SUBCOMMAND_SEPARATOR)
   }
   addSubcommand(runService)

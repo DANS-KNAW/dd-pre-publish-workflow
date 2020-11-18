@@ -1,0 +1,19 @@
+[Unit]
+Description=Handles the pre-publish workflow
+
+[Service]
+ExecStart=/bin/java \
+   $INITIAL_HEAP_SIZE \
+   -Dlogback.configurationFile=/etc/opt/dans.knaw.nl/dd-pre-publish-workflow/logback-service.xml \
+   -Dapp.home=/opt/dans.knaw.nl/dd-pre-publish-workflow \
+   -Dorg.scalatra.environment="production" \
+   -jar /opt/dans.knaw.nl/dd-pre-publish-workflow/bin/dd-pre-publish-workflow.jar run-service
+
+# Java returns 143 even if the SIGTERM was handled correctly.
+SuccessExitStatus=143
+
+User=dd-pre-publish-workflow
+Group=dd-pre-publish-workflow
+
+[Install]
+WantedBy=multi-user.target

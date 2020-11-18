@@ -2,9 +2,9 @@
 <configuration scan="true" scanPeriod="1 minute">
     <appender name="FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/opt/dans.knaw.nl/log/easy-workflows-poc/easy-workflows-poc.log</file>
+        <file>/var/opt/dans.knaw.nl/log/dd-pre-publish-workflow/dd-pre-publish-workflow.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/var/opt/dans.knaw.nl/log/easy-workflows-poc/easy-workflows-poc.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>/var/opt/dans.knaw.nl/log/dd-pre-publish-workflow/dd-pre-publish-workflow.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -14,11 +14,11 @@
     <appender name="JOURNAL" class="org.gnieh.logback.SystemdJournalAppender">
         <logStackTrace>true</logStackTrace>
         <logLoggerName>true</logLoggerName>
-        <syslogIdentifier>easy-workflows-poc</syslogIdentifier>
+        <syslogIdentifier>dd-pre-publish-workflow</syslogIdentifier>
     </appender>
     <root level="warn">
         <appender-ref ref="FILE"/>
         <appender-ref ref="JOURNAL" />
     </root>
-    <logger name="nl.knaw.dans.easy" level="info"/>
+    <logger name="nl.knaw.dans.dd" level="info"/>
 </configuration>

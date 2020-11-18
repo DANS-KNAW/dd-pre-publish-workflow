@@ -1,0 +1,18 @@
+{
+  "name": "Update Data Vault Metadata",
+  "steps": [
+    {
+      "provider":":internal",
+      "stepType":"http/sr",
+      "parameters": {
+        "url":"http://10.0.2.2:20210/workflow",
+        "method":"POST",
+        "contentType":"application/json",
+        "body":"{\"invocationId\": \"${invocationId}\",\"globalId\": \"${dataset.globalId}\",\"datasetId\": \"${dataset.id}\", \"majorVersion\": \"${majorVersion}\", \"minorVersion\": \"${minorVersion}\" }",
+        "expectedResponse":".*",
+        "rollbackUrl":"http://10.0.2.2:20210/workflow",
+        "rollbackMethod":"DELETE"
+      }
+    }
+  ]
+}

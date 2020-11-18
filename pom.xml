@@ -23,24 +23,24 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-app-project</artifactId>
-        <version>6.0.1</version>
+        <version>6.0.3</version>
     </parent>
 
-    <groupId>nl.knaw.dans.easy</groupId>
-    <artifactId>easy-workflows-poc</artifactId>
+    <groupId>nl.knaw.dans.dd</groupId>
+    <artifactId>dd-pre-publish-workflow</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <name>EASY Workflows Poc</name>
-    <url>https://github.com/DANS-KNAW/easy-workflows-poc</url>
-    <description>PoC for working with Dataverse workflows</description>
+    <name>Pre-publish workflow handler</name>
+    <url>https://github.com/DANS-KNAW/dd-pre-publish-workflow</url>
+    <description>Handles pre-publish workflow.</description>
     <inceptionYear>2020</inceptionYear>
 
     <properties>
-        <main-class>nl.knaw.dans.easy.wf.Command</main-class>
+        <main-class>nl.knaw.dans.dd.prepub.Command</main-class>
     </properties>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-workflows-poc</developerConnection>
+        <developerConnection>scm:git:https://github.com/DANS-KNAW/dd-pre-publish-workflow</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -78,6 +78,10 @@
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
         </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
         <!-- service -->
         <dependency>
@@ -95,6 +99,22 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-native_2.12</artifactId>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.json4s/json4s-jackson -->
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.12</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_2.12</artifactId>
+            <version>2.4.2</version>
         </dependency>
 
         <!-- logging -->

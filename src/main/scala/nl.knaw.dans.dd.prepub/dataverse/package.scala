@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.wf
+package nl.knaw.dans.dd.prepub
 
-import scala.util.{ Success, Try }
-
-class EasyWorkflowsPocApp(configuration: Configuration)  {
-
-
-
+package object dataverse {
+  case class CommandFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
 }

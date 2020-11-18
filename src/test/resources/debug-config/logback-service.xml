@@ -6,9 +6,9 @@
         </encoder>
     </appender>
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>data/easy-workflows-poc.log</file>
+        <file>data/dd-pre-publish-workflow.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>data/easy-workflows-poc.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>data/dd-pre-publish-workflow.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -19,5 +19,5 @@
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="nl.knaw.dans.easy" level="trace"/>
+    <logger name="nl.knaw.dans.dd" level="trace"/>
 </configuration>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.wf
+package nl.knaw.dans.dd.prepub
 
 import javax.servlet.ServletContext
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -24,8 +24,8 @@ import org.scalatra.servlet.ScalatraListener
 
 import scala.util.Try
 
-class EasyWorkflowsPocService(serverPort: Int,
-                         servlets: Map[String, ScalatraServlet]) extends DebugEnhancedLogging {
+class PrePublishWorkflowService(serverPort: Int,
+                                servlets: Map[String, ScalatraServlet]) extends DebugEnhancedLogging {
 
   private val server = new Server(serverPort) {
     setHandler(

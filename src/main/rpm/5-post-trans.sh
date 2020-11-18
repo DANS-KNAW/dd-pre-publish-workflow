@@ -17,7 +17,7 @@
 
 #include <service.sh>
 
-MODULE_NAME=easy-workflows-poc
+MODULE_NAME=dd-pre-publish-workflow
 PHASE="POST-TRANS"
 
 echo "$PHASE: START"

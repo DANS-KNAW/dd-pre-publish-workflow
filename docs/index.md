@@ -1,7 +1,9 @@
 dd-pre-publish-workflow
 ===========
+[![Build Status](https://travis-ci.org/DANS-KNAW/dd-pre-publish-workflow.png?branch=master)](https://travis-ci.org/DANS-KNAW/dd-pre-publish-workflow)
 
-Populates the Dans Data Vault custom metadatablock in a Dataverse pre-publish workflow
+Handles pre-publish workflow.
+
 
 SYNOPSIS
 --------
@@ -14,16 +16,23 @@ DESCRIPTION
 
 Handles pre-publish workflow.
 
+
 ARGUMENTS
 ---------
 
     Options:
-    
-      -h, --help      Show help message
-      -v, --version   Show version of this program
-    
-    Subcommands:
-      run-service   Starts the service as a daemon.
+
+       -h, --help      Show help message
+       -v, --version   Show version of this program
+
+    Subcommand: run-service - Starts DD Easy Worflows Poc as a daemon that services HTTP requests
+       -h, --help   Show help message
+    ---
+
+EXAMPLES
+--------
+
+    dd-pre-publish-workflow -o value
 
 INSTALLATION AND CONFIGURATION
 ------------------------------
@@ -55,4 +64,3 @@ Maven's `-P` switch: `mvn -Pprm install`.
 Alternatively, to build the tarball execute:
 
     mvn clean install assembly:single
-

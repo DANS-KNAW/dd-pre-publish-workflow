@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.wf
+package nl.knaw.dans.dd.prepub.dataverse
 
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.scalatra._
+import java.net.URI
 
-class EasyWorkflowsPocServlet(app: EasyWorkflowsPocApp,
-                         version: String) extends ScalatraServlet with DebugEnhancedLogging {
-
-  get("/") {
-    contentType = "text/plain"
-    Ok(s"EASY Workflows Poc Service running ($version)")
-  }
-}
+case class DataverseInstanceConfig(connectionTimeout: Int,
+                                   readTimeout: Int,
+                                   baseUrl: URI,
+                                   apiToken: String,
+                                   apiVersion: String)
