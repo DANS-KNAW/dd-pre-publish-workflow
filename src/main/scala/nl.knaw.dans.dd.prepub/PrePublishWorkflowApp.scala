@@ -16,17 +16,16 @@
 package nl.knaw.dans.dd.prepub
 
 import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 
 import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
-import nl.knaw.dans.dd.prepub.dataverse.json.{ DatasetVersion, MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
-import nl.knaw.dans.dd.prepub.queue.ActiveTaskQueue
+import nl.knaw.dans.dd.prepub.dataverse.json.{ MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.{ DefaultFormats, Formats, JObject }
-import org.json4s.JsonAST.JValue
 import org.json4s.jackson.{ JsonMethods, Serialization }
+import org.json4s.{ DefaultFormats, Formats, JObject }
 import scalaj.http.Http
 
-import scala.util.{ Success, Try }
+import scala.util.Try
 
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
   implicit val jsonFormats: Formats = DefaultFormats + MetadataFieldSerializer
@@ -35,38 +34,25 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
 
   private implicit val resultOutput: PrintStream = Console.out
   private val dataverse = new DataverseInstance(configuration.dataverse)
-
-  private def getMetadata(datasetIdentifier: String): String = {
-    trace(datasetIdentifier)
-    val result = Http(s"${ configuration.dataverse.baseUrl }/api/datasets/:persistentId/?persistentId=$datasetIdentifier")
-      .header("content-type", "application/json")
-      .header("accept", "application/json")
-      .header("X-Dataverse-key", configuration.dataverse.apiToken)
-      .asString.body
-
-    result
-  }
-
-
-  val mapper = new DansDataVaultMetadataBlockMapper
+  private val mapper = new DansDataVaultMetadataBlockMapper
 
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     trace(workFlowVariables)
-    val metadata = getMetadata(workFlowVariables.pid)
-    debug(s"Found vault metadata $metadata")
-    getVaultBlockOpt(metadata).flatMap {
-      vaultBlockOpt => {
+    for {
+      response <- dataverse.dataset(workFlowVariables.pid, isPersistentId = true).view(Some(":draft"))
+      metadata <- Try { new String(response.body, StandardCharsets.UTF_8) }
+      _ = debug(s"Found vault metadata $metadata")
+      vaultBlockOpt <- getVaultBlockOpt(metadata)
+      vaultFields <- Try {
         val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
         val urn = getVaultFieldValue(vaultBlockOpt, "dansNbn")
         val otherId = getVaultFieldValue(vaultBlockOpt, "dansOtherId")
         val otherIdVersion = getVaultFieldValue(vaultBlockOpt, "dansOtherIdVersion")
         val swordToken = getVaultFieldValue(vaultBlockOpt, "dansSwordToken")
-
-        val vaultFields = mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
-        debug("Trying to update metadata...")
-        dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields), replace = true).map(_ => ())
+        mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
       }
-    }
+      _ <- dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields), replace = true)
+    } yield ()
   }
 
   private def getVaultFieldValue(vaultBlockOpt: Option[MetadataBlock], fieldId: String): Option[String] = {
@@ -82,6 +68,4 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
       case v => Option(v.extract[MetadataBlock])
     }
   }
-
-
 }
