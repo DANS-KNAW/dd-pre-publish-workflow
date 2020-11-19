@@ -19,7 +19,8 @@ import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 
 import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
-import nl.knaw.dans.dd.prepub.dataverse.json.{ MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
+import nl.knaw.dans.dd.prepub.dataverse.json.{ DatasetVersion, MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
+import nl.knaw.dans.dd.prepub.queue.ActiveTaskQueue
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.jackson.{ JsonMethods, Serialization }
 import org.json4s.{ DefaultFormats, Formats, JObject }
