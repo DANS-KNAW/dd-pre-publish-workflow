@@ -18,15 +18,13 @@ package nl.knaw.dans.dd.prepub
 import java.io.PrintStream
 
 import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
-import nl.knaw.dans.dd.prepub.dataverse.json.{ DatasetVersion, MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
-import nl.knaw.dans.dd.prepub.queue.ActiveTaskQueue
+import nl.knaw.dans.dd.prepub.dataverse.json.{ MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.{ DefaultFormats, Formats, JObject }
-import org.json4s.JsonAST.JValue
 import org.json4s.jackson.{ JsonMethods, Serialization }
+import org.json4s.{ DefaultFormats, Formats, JObject }
 import scalaj.http.Http
 
-import scala.util.{ Success, Try }
+import scala.util.Try
 
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
   implicit val jsonFormats: Formats = DefaultFormats + MetadataFieldSerializer
@@ -46,7 +44,6 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
 
     result
   }
-
 
   val mapper = new DansDataVaultMetadataBlockMapper
 
@@ -82,6 +79,4 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
       case v => Option(v.extract[MetadataBlock])
     }
   }
-
-
 }

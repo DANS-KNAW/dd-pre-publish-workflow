@@ -18,6 +18,7 @@ package nl.knaw.dans.dd.prepub
 import java.util.UUID
 
 import nl.knaw.dans.dd.prepub.dataverse.json._
+import scalaj.http.Http
 
 import scala.collection.mutable.ListBuffer
 
@@ -44,7 +45,6 @@ class DansDataVaultMetadataBlockMapper {
     //       if no previous version: filled in bagId means SWORD filled it in
     //       if previous version: new bagId means SWORD filled it in, the same bagId as in previous version means UI created new draft.
     fields.append(EditField("dansBagId", b.getOrElse(mintBagId())))
-
     fields.append(EditField("dansNbn", n.getOrElse(mintUrnNbn())))
     o.foreach(b => fields.append(EditField("dansOtherId", b)))
     ov.foreach(b => fields.append(EditField("dansOtherIdVersion", b)))
@@ -53,10 +53,22 @@ class DansDataVaultMetadataBlockMapper {
   }
 
   def mintUrnNbn(): String = {
-    "testURN:NBN"
+    val result = Http("http://localhost:20140/create?type=urn")
+      .method("POST")
+      .header("content-type", "*/*")
+      .header("accept", "*/*")
+      .asString.body
+
+    result
+    //TODO: add error handling
+
+    //    result.code match {
+    //      case 201 => Success(result.body)
+    //      case _ => Failure(new Exception("URN:NBN could not be minted"))
+    //    }
   }
 
   def mintBagId(): String = {
-    s"urn:uuid${ UUID.randomUUID().toString }"
+    s"urn:uuid:${ UUID.randomUUID().toString }"
   }
 }
