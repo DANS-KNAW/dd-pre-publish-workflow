@@ -19,12 +19,10 @@ import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 
 import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
-import nl.knaw.dans.dd.prepub.dataverse.json.{ DatasetVersion, MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
-import nl.knaw.dans.dd.prepub.queue.ActiveTaskQueue
+import nl.knaw.dans.dd.prepub.dataverse.json.{ MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.jackson.{ JsonMethods, Serialization }
 import org.json4s.{ DefaultFormats, Formats, JObject }
-import scalaj.http.Http
 
 import scala.util.Try
 
@@ -35,7 +33,7 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
 
   private implicit val resultOutput: PrintStream = Console.out
   private val dataverse = new DataverseInstance(configuration.dataverse)
-  private val mapper = new DansDataVaultMetadataBlockMapper
+  private val mapper = new DansDataVaultMetadataBlockMapper(configuration)
 
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     trace(workFlowVariables)

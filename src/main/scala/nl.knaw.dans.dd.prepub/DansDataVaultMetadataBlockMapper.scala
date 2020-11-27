@@ -22,7 +22,7 @@ import scalaj.http.Http
 
 import scala.collection.mutable.ListBuffer
 
-class DansDataVaultMetadataBlockMapper {
+class DansDataVaultMetadataBlockMapper(configuration: Configuration) {
 
   case class EditField(typeName: String, value: String)
   case class EditFields(fields: List[EditField])
@@ -52,20 +52,13 @@ class DansDataVaultMetadataBlockMapper {
     EditFields(fields.toList)
   }
 
+  //TODO: add error handling
   def mintUrnNbn(): String = {
-    val result = Http("http://localhost:20140/create?type=urn")
+    Http(s"${ configuration.pidGeneratorBaseUrl }create?type=urn")
       .method("POST")
       .header("content-type", "*/*")
       .header("accept", "*/*")
       .asString.body
-
-    result
-    //TODO: add error handling
-
-    //    result.code match {
-    //      case 201 => Success(result.body)
-    //      case _ => Failure(new Exception("URN:NBN could not be minted"))
-    //    }
   }
 
   def mintBagId(): String = {
