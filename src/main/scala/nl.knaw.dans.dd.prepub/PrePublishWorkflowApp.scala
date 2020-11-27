@@ -33,7 +33,7 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
 
   private implicit val resultOutput: PrintStream = Console.out
   private val dataverse = new DataverseInstance(configuration.dataverse)
-  private val mapper = new DansDataVaultMetadataBlockMapper(configuration)
+  private val mapper = new DansDataVaultMetadataBlockMapper(configuration.pidGeneratorBaseUrl)
 
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     trace(workFlowVariables)
