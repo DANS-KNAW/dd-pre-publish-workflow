@@ -1,9 +1,3 @@
 # configuration for authorized and required reviewers
-
-# code
-# no overrides
-
-# policies
-/.github/PULL_REQUEST_TEMPLATE.md @DANS-KNAW/dataversedans
-/.github/CODEOWNERS @
+* @janvanmansum
 

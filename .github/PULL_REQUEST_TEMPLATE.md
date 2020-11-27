@@ -1,17 +1,14 @@
 Fixes DD-
 
+# Description of changes
+
+
+# How to test
+
+
+# Related PRs 
+(Add links)
 * 
-* 
-* 
 
-#### Where should the reviewer @DANS-KNAW/dataversedans start?
-
-#### How should this be manually tested?
-
-#### Related pull requests on github
-
-
-
-repo                       | PR                | note
--------------------------- | ----------------- | ----
-DD-                      | [PR#](PRlink)     | ..
+# Notify
+@DANS-KNAW/dataversedans
