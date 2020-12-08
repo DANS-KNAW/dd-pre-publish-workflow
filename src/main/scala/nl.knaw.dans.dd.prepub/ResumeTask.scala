@@ -15,18 +15,14 @@
  */
 package nl.knaw.dans.dd.prepub
 
-import java.nio.charset.StandardCharsets
-
-import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
 import nl.knaw.dans.dd.prepub.queue.Task
+import nl.knaw.dans.lib.dataverse.DataverseInstance
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.Formats
-import org.json4s.native.JsonMethods
 
 import scala.util.Try
 
 case class ResumeTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance)(implicit jsonFormats: Formats) extends Task with DebugEnhancedLogging {
-
 
   override def run(): Try[Unit] = Try {
     trace(())
@@ -35,9 +31,9 @@ case class ResumeTask(workFlowVariables: WorkFlowVariables, dataverse: Dataverse
     while (!isLocked) {
       debug("Requesting lock-status...")
       val result = for {
-        response <- dataverse.dataset(workFlowVariables.datasetId, isPersistentId = true).getLocks(Some("Workflow"))
-        lockStatus <- Try { JsonMethods.parse(new String(response.body, StandardCharsets.UTF_8)).extract[LockStatusMessage] }
-      } yield lockStatus.data.nonEmpty
+        response <- dataverse.dataset(workFlowVariables.datasetId).getLocks
+        workFlowLock <- response.data.map(_.filter(_.lockType == "Workflow"))
+      } yield workFlowLock.nonEmpty
       debug(s"result = $result")
       isLocked = result.getOrElse(false)
       Thread.sleep(1000)

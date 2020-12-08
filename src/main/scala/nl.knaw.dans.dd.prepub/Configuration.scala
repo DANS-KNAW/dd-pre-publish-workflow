@@ -19,7 +19,7 @@ import java.net.URI
 
 import better.files.File
 import better.files.File.root
-import nl.knaw.dans.dd.prepub.dataverse.DataverseInstanceConfig
+import nl.knaw.dans.lib.dataverse.DataverseInstanceConfig
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
@@ -46,10 +46,10 @@ object Configuration {
       serverPort = properties.getInt("daemon.http.port"),
       pidGeneratorBaseUrl = properties.getString("pid-generator.base-url"),
       dataverse = DataverseInstanceConfig(
-        connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
-        readTimeout = properties.getInt("dataverse.read-timeout-ms"),
         baseUrl = new URI(properties.getString("dataverse.base-url")),
         apiToken = properties.getString("dataverse.api-key"),
+        connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
+        readTimeout = properties.getInt("dataverse.read-timeout-ms"),
         apiVersion = properties.getString("dataverse.api-version")
       ))
   }

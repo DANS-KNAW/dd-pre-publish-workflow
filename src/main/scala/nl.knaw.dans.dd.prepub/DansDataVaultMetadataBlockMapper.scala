@@ -17,17 +17,12 @@ package nl.knaw.dans.dd.prepub
 
 import java.util.UUID
 
-import nl.knaw.dans.dd.prepub.dataverse.json._
+import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataField, PrimitiveSingleValueField }
 import scalaj.http.Http
 
 import scala.collection.mutable.ListBuffer
 
 class DansDataVaultMetadataBlockMapper(configuration: Configuration) {
-
-  case class EditField(typeName: String, value: String)
-  case class EditFields(fields: List[EditField])
-
-  val vaultFields = new ListBuffer[PrimitiveFieldSingleValue]
 
   // TODO: Base on info from workflow
   def createDataVaultFields(workFlowVariables: WorkFlowVariables,
@@ -35,21 +30,21 @@ class DansDataVaultMetadataBlockMapper(configuration: Configuration) {
                             n: Option[String],
                             o: Option[String],
                             ov: Option[String],
-                            st: Option[String]): EditFields = {
-    val fields = ListBuffer[EditField]()
-    fields.append(EditField("dansDataversePid", workFlowVariables.pid))
-    fields.append(EditField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
+                            st: Option[String]): FieldList = {
+    val fields = ListBuffer[MetadataField]()
+    fields.append(PrimitiveSingleValueField("dansDataversePid", workFlowVariables.pid))
+    fields.append(PrimitiveSingleValueField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
 
     // TODO: How find out if a bagId that is found here is carried over from the previous version or a bagId minted by the SWORD service?
     //       Compare with bagId of previous version if exists
     //       if no previous version: filled in bagId means SWORD filled it in
     //       if previous version: new bagId means SWORD filled it in, the same bagId as in previous version means UI created new draft.
-    fields.append(EditField("dansBagId", b.getOrElse(mintBagId())))
-    fields.append(EditField("dansNbn", n.getOrElse(mintUrnNbn())))
-    o.foreach(b => fields.append(EditField("dansOtherId", b)))
-    ov.foreach(b => fields.append(EditField("dansOtherIdVersion", b)))
-    st.foreach(b => fields.append(EditField("dansSwordToken", b)))
-    EditFields(fields.toList)
+    fields.append(PrimitiveSingleValueField("dansBagId", b.getOrElse(mintBagId())))
+    fields.append(PrimitiveSingleValueField("dansNbn", n.getOrElse(mintUrnNbn())))
+    o.foreach(b => fields.append(PrimitiveSingleValueField("dansOtherId", b)))
+    ov.foreach(b => fields.append(PrimitiveSingleValueField("dansOtherIdVersion", b)))
+    st.foreach(b => fields.append(PrimitiveSingleValueField("dansSwordToken", b)))
+    FieldList(fields.toList)
   }
 
   //TODO: add error handling
