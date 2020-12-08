@@ -15,12 +15,12 @@
  */
 package nl.knaw.dans.dd.prepub
 
-import nl.knaw.dans.dd.prepub.dataverse.RequestFailedException
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.jackson.JsonMethods
 import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra._
-import nl.knaw.dans.lib.error._
+
 import scala.util.{ Failure, Success }
 
 class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
@@ -47,7 +47,7 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
     app.handleWorkflow(workflowVariables)
       .doIfSuccess { _ => logger.info("Workflow finished successfully") }
       .doIfFailure { case e => logger.error("Workflow failed", e) }
-    match{
+    match {
       case Success(_) => ServiceUnavailable()
       /*
        * The Dataverse code only check if the result is successful (200 or 201) or not, so there is no point in returning a
@@ -63,5 +63,4 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
     trace(request.body)
     Ok()
   }
-
 }

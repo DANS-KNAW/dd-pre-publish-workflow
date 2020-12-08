@@ -16,10 +16,9 @@
 package nl.knaw.dans.dd.prepub
 
 import java.io.PrintStream
-import java.nio.charset.StandardCharsets
 
-import nl.knaw.dans.dd.prepub.dataverse.DataverseInstance
-import nl.knaw.dans.dd.prepub.dataverse.json.{ MetadataBlock, MetadataFieldSerializer, PrimitiveFieldSingleValue }
+import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
+import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.jackson.{ JsonMethods, Serialization }
 import org.json4s.{ DefaultFormats, Formats, JObject }
@@ -38,9 +37,9 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     trace(workFlowVariables)
     for {
-      response <- dataverse.dataset(workFlowVariables.pid, isPersistentId = true).view(Some(":draft"))
-      metadata <- Try { new String(response.body, StandardCharsets.UTF_8) }
-      _ = debug(s"Found vault metadata $metadata")
+      response <- dataverse.dataset(workFlowVariables.pid).view(Version.DRAFT)
+      metadata <- response.string
+      _ = debug(s"Found vault metadata ${response.string}")
       vaultBlockOpt <- getVaultBlockOpt(metadata)
       vaultFields <- Try {
         val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
@@ -50,17 +49,17 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
         val swordToken = getVaultFieldValue(vaultBlockOpt, "dansSwordToken")
         mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
       }
-      _ <- dataverse.dataset(workFlowVariables.pid, isPersistentId = true).editMetadata(Serialization.writePretty(vaultFields), replace = true)
+      _ <- dataverse.dataset(workFlowVariables.pid).editMetadata(vaultFields, replace = true)
     } yield ()
   }
 
   private def getVaultFieldValue(vaultBlockOpt: Option[MetadataBlock], fieldId: String): Option[String] = {
-    vaultBlockOpt.flatMap(_.fields.map(_.asInstanceOf[PrimitiveFieldSingleValue]).find(_.typeName == fieldId)).map(_.value)
+    vaultBlockOpt.flatMap(_.fields.map(_.asInstanceOf[PrimitiveSingleValueField]).find(_.typeName == fieldId)).map(_.value)
   }
 
   private def getVaultBlockOpt(metadata: String): Try[Option[MetadataBlock]] = Try {
     trace(metadata)
-    val vaultBlockJson = (JsonMethods.parse(metadata) \\ "dansDataVaultMetadata")
+    val vaultBlockJson = JsonMethods.parse(metadata) \\ "dansDataVaultMetadata"
     if (logger.underlying.isDebugEnabled) debug(Serialization.writePretty(vaultBlockJson))
     vaultBlockJson match {
       case JObject(List()) => None
