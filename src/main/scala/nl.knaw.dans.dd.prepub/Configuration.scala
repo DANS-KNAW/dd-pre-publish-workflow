@@ -24,7 +24,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          serverPort: Int,
-                         pidGeneratorBaseUrl: String,
+                         pidGeneratorBaseUrl: URI,
                          dataverse: DataverseInstanceConfig
                         )
 
@@ -44,7 +44,7 @@ object Configuration {
     new Configuration(
       version = (home / "bin" / "version").contentAsString.stripLineEnd,
       serverPort = properties.getInt("daemon.http.port"),
-      pidGeneratorBaseUrl = properties.getString("pid-generator.base-url"),
+      pidGeneratorBaseUrl = new URI(properties.getString("pid-generator.base-url") + "/"),
       dataverse = DataverseInstanceConfig(
         baseUrl = new URI(properties.getString("dataverse.base-url")),
         apiToken = properties.getString("dataverse.api-key"),

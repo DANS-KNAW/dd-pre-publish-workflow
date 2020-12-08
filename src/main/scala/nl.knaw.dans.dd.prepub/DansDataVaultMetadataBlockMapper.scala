@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dd.prepub
 
+import java.net.URI
 import java.util.UUID
 
 import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataField, PrimitiveSingleValueField }
@@ -22,7 +23,7 @@ import scalaj.http.Http
 
 import scala.collection.mutable.ListBuffer
 
-class DansDataVaultMetadataBlockMapper(configuration: Configuration) {
+class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI) {
 
   // TODO: Base on info from workflow
   def createDataVaultFields(workFlowVariables: WorkFlowVariables,
@@ -49,7 +50,7 @@ class DansDataVaultMetadataBlockMapper(configuration: Configuration) {
 
   //TODO: add error handling
   def mintUrnNbn(): String = {
-    Http(s"${ configuration.pidGeneratorBaseUrl }create?type=urn")
+    Http(s"${pidGeneratorBaseUrl resolve "create"}?type=urn")
       .method("POST")
       .header("content-type", "*/*")
       .header("accept", "*/*")
