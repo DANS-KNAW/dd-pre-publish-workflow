@@ -18,12 +18,14 @@ package nl.knaw.dans.dd.prepub
 import java.net.URI
 import java.util.UUID
 
-import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataField, PrimitiveSingleValueField }
+import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataBlock, MetadataField, PrimitiveSingleValueField }
+import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scalaj.http.Http
 
 import scala.collection.mutable.ListBuffer
 
-class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI) {
+class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: DataverseInstance) extends DebugEnhancedLogging {
 
   // TODO: Base on info from workflow
   def createDataVaultFields(workFlowVariables: WorkFlowVariables,
@@ -35,12 +37,7 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI) {
     val fields = ListBuffer[MetadataField]()
     fields.append(PrimitiveSingleValueField("dansDataversePid", workFlowVariables.pid))
     fields.append(PrimitiveSingleValueField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
-
-    // TODO: How find out if a bagId that is found here is carried over from the previous version or a bagId minted by the SWORD service?
-    //       Compare with bagId of previous version if exists
-    //       if no previous version: filled in bagId means SWORD filled it in
-    //       if previous version: new bagId means SWORD filled it in, the same bagId as in previous version means UI created new draft.
-    fields.append(PrimitiveSingleValueField("dansBagId", b.getOrElse(mintBagId())))
+    fields.append(PrimitiveSingleValueField("dansBagId", setBagId(b, workFlowVariables.pid)))
     fields.append(PrimitiveSingleValueField("dansNbn", n.getOrElse(mintUrnNbn())))
     o.foreach(b => fields.append(PrimitiveSingleValueField("dansOtherId", b)))
     ov.foreach(b => fields.append(PrimitiveSingleValueField("dansOtherIdVersion", b)))
@@ -48,9 +45,47 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI) {
     FieldList(fields.toList)
   }
 
+  private def setBagId(bagIdOpt: Option[String], pid: String): String = {
+    bagIdOpt match {
+      case Some(bagId) => checkBagIdOrigin(bagId, pid)
+      case None => mintBagId()
+    }
+  }
+
+  /**
+   *
+   * @param bagId the bagId found in the Vault metadatablock
+   * @param pid   the dataset pid
+   * @return
+   * if no previous version: filled in bagId means SWORD filled it in
+   * if previous version: new bagId means SWORD filled it in, the same bagId as in previous version means UI created new draft.
+   */
+  private def checkBagIdOrigin(bagId: String, pid: String): String = {
+    val bagIdPreviousVersion = getBagIdOfPreviousVersion(pid)
+    if (bagId.equals(bagIdPreviousVersion.getOrElse("")))
+      mintBagId()
+    else
+      bagId
+  }
+
+  private def getBagIdOfPreviousVersion(pid: String): Option[String] = {
+    dataverse.dataset(pid)
+      .view(Version.LATEST_PUBLISHED)
+      .flatMap(_.json)
+      .map(_ \\ "dansDataVaultMetadata")
+      .toOption
+      .map(_.extract[MetadataBlock])
+      .flatMap(
+        _.fields
+          .map(_.asInstanceOf[PrimitiveSingleValueField])
+          .find(_.typeName == "dansBagId")
+      )
+      .map(_.value)
+  }
+
   //TODO: add error handling
   def mintUrnNbn(): String = {
-    Http(s"${pidGeneratorBaseUrl resolve "create"}?type=urn")
+    Http(s"${ pidGeneratorBaseUrl resolve "create" }?type=urn")
       .method("POST")
       .header("content-type", "*/*")
       .header("accept", "*/*")

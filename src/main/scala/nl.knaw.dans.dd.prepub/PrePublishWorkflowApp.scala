@@ -32,14 +32,14 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
 
   private implicit val resultOutput: PrintStream = Console.out
   private val dataverse = new DataverseInstance(configuration.dataverse)
-  private val mapper = new DansDataVaultMetadataBlockMapper(configuration.pidGeneratorBaseUrl)
+  private val mapper = new DansDataVaultMetadataBlockMapper(configuration.pidGeneratorBaseUrl, dataverse)
 
   def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
     trace(workFlowVariables)
     for {
       response <- dataverse.dataset(workFlowVariables.pid).view(Version.DRAFT)
       metadata <- response.string
-      _ = debug(s"Found vault metadata ${response.string}")
+      _ = debug(s"Found vault metadata ${ response.string }")
       vaultBlockOpt <- getVaultBlockOpt(metadata)
       vaultFields <- Try {
         val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
