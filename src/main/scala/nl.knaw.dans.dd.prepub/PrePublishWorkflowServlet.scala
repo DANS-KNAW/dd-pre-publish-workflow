@@ -48,7 +48,7 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
       .doIfSuccess { _ => logger.info("Workflow finished successfully") }
       .doIfFailure { case e => logger.error("Workflow failed", e) }
     match {
-      case Success(_) => ServiceUnavailable()
+      case Success(_) => Ok()
       /*
        * The Dataverse code only check if the result is successful (200 or 201) or not, so there is no point in returning a
        * sophisticated response here.

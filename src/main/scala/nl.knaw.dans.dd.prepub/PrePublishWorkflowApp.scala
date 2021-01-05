@@ -41,7 +41,7 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
       metadata <- response.string
       _ = debug(s"Found vault metadata ${ response.string }")
       vaultBlockOpt <- getVaultBlockOpt(metadata)
-      vaultFields <- Try {
+      vaultFields <- {
         val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
         val urn = getVaultFieldValue(vaultBlockOpt, "dansNbn")
         val otherId = getVaultFieldValue(vaultBlockOpt, "dansOtherId")

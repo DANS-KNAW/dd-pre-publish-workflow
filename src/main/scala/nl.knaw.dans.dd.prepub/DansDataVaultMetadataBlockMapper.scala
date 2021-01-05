@@ -18,12 +18,13 @@ package nl.knaw.dans.dd.prepub
 import java.net.URI
 import java.util.UUID
 
-import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataBlock, MetadataField, PrimitiveSingleValueField }
+import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataField, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scalaj.http.Http
 
 import scala.collection.mutable.ListBuffer
+import scala.util.{ Failure, Success, Try }
 
 class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: DataverseInstance) extends DebugEnhancedLogging {
 
@@ -33,23 +34,36 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
                             n: Option[String],
                             o: Option[String],
                             ov: Option[String],
-                            st: Option[String]): FieldList = {
+                            st: Option[String]): Try[FieldList] = {
+    for {
+      bagId <- setBagId(b, workFlowVariables.pid)
+      urn <- n.map(Success(_)).getOrElse(mintUrnNbn())
+      fieldList = createFieldList(workFlowVariables, o, ov, st, bagId, urn)
+    } yield fieldList
+  }
+
+  private def createFieldList(workFlowVariables: WorkFlowVariables,
+                              o: Option[String],
+                              ov: Option[String],
+                              st: Option[String],
+                              bagId: String,
+                              urn: String,
+                             ): FieldList = {
+
     val fields = ListBuffer[MetadataField]()
     fields.append(PrimitiveSingleValueField("dansDataversePid", workFlowVariables.pid))
     fields.append(PrimitiveSingleValueField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
-    fields.append(PrimitiveSingleValueField("dansBagId", setBagId(b, workFlowVariables.pid)))
-    fields.append(PrimitiveSingleValueField("dansNbn", n.getOrElse(mintUrnNbn())))
+    fields.append(PrimitiveSingleValueField("dansBagId", bagId))
+    fields.append(PrimitiveSingleValueField("dansNbn", urn))
     o.foreach(b => fields.append(PrimitiveSingleValueField("dansOtherId", b)))
     ov.foreach(b => fields.append(PrimitiveSingleValueField("dansOtherIdVersion", b)))
     st.foreach(b => fields.append(PrimitiveSingleValueField("dansSwordToken", b)))
     FieldList(fields.toList)
   }
 
-  private def setBagId(bagIdOpt: Option[String], pid: String): String = {
-    bagIdOpt match {
-      case Some(bagId) => checkBagIdOrigin(bagId, pid)
-      case None => mintBagId()
-    }
+  private def setBagId(bagIdOpt: Option[String], pid: String): Try[String] = bagIdOpt match {
+    case Some(bagId) => checkBagIdOrigin(bagId, pid)
+    case None => Success(mintBagId())
   }
 
   /**
@@ -60,37 +74,35 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
    * if no previous version: filled in bagId means SWORD filled it in
    * if previous version: new bagId means SWORD filled it in, the same bagId as in previous version means UI created new draft.
    */
-  private def checkBagIdOrigin(bagId: String, pid: String): String = {
-    val bagIdPreviousVersion = getBagIdOfPreviousVersion(pid)
-    if (bagId.equals(bagIdPreviousVersion.getOrElse("")))
-      mintBagId()
-    else
-      bagId
-  }
+  private def checkBagIdOrigin(bagId: String, pid: String): Try[String] = {
+    getBagIdOfPreviousVersion(pid)
+      .map(bagIdOpt => {
+        if (bagId.equals(bagIdOpt.getOrElse("")))
+          mintBagId()
+        else
+          bagId
+      })
+  }.recoverWith { case e: Exception => Failure(new Exception(s"Problem with Dataverse api : $e")) }
 
-  private def getBagIdOfPreviousVersion(pid: String): Option[String] = {
-    dataverse.dataset(pid)
-      .view(Version.LATEST_PUBLISHED)
-      .flatMap(_.json)
-      .map(_ \\ "dansDataVaultMetadata")
-      .toOption
-      .map(_.extract[MetadataBlock])
-      .flatMap(
-        _.fields
+  private def getBagIdOfPreviousVersion(pid: String): Try[Option[String]] = {
+    for {
+      response <- dataverse.dataset(pid).view(Version.LATEST_PUBLISHED)
+      dsv <- response.data
+      optBagId = dsv.metadataBlocks.get("dansDataVaultMetadata")
+        .flatMap(_.fields
           .map(_.asInstanceOf[PrimitiveSingleValueField])
-          .find(_.typeName == "dansBagId")
-      )
-      .map(_.value)
+          .find(_.typeName == "dansBagId"))
+        .map(_.value)
+    } yield optBagId
   }
 
-  //TODO: add error handling
-  def mintUrnNbn(): String = {
+  def mintUrnNbn(): Try[String] = Try {
     Http(s"${ pidGeneratorBaseUrl resolve "create" }?type=urn")
       .method("POST")
       .header("content-type", "*/*")
       .header("accept", "*/*")
       .asString.body
-  }
+  }.recoverWith { case e: Exception => Failure(new Exception(s"Problem with pid-generator service : $e")) }
 
   def mintBagId(): String = {
     s"urn:uuid:${ UUID.randomUUID().toString }"
