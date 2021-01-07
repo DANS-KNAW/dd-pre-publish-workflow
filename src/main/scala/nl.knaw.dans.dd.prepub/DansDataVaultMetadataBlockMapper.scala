@@ -82,7 +82,7 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
         else
           bagId
       })
-  }.recoverWith { case e: Exception => Failure(new Exception(s"Problem with Dataverse api : $e")) }
+  }.recoverWith { case e: Exception => Failure(ExternalSystemCallException(s"Problem with Dataverse api: $e")) }
 
   private def getBagIdOfPreviousVersion(pid: String): Try[Option[String]] = {
     for {
@@ -99,10 +99,9 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
   def mintUrnNbn(): Try[String] = Try {
     Http(s"${ pidGeneratorBaseUrl resolve "create" }?type=urn")
       .method("POST")
-      .header("content-type", "*/*")
-      .header("accept", "*/*")
+      .header("Accept", "application/json")
       .asString.body
-  }.recoverWith { case e: Exception => Failure(new Exception(s"Problem with pid-generator service : $e")) }
+  }.recoverWith { case e: Exception => Failure(ExternalSystemCallException(s"Problem with pid-generator service: $e")) }
 
   def mintBagId(): String = {
     s"urn:uuid:${ UUID.randomUUID().toString }"

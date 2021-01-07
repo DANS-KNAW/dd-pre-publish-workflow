@@ -28,6 +28,7 @@ package object prepub {
   case class LockRecord(lockType: String, date: String, user: String)
   case class LockStatusMessage(status: String, data: List[LockRecord])
   case class RequestFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
+  case class ExternalSystemCallException(msg: String) extends Exception(msg)
 
   type JsonObject = Map[String, MetadataField]
 
