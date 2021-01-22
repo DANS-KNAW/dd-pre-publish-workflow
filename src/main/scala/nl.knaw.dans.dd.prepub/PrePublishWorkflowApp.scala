@@ -28,9 +28,6 @@ import scala.util.Try
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
   implicit val jsonFormats: Formats = DefaultFormats + MetadataFieldSerializer
 
-  // TODO: output should not go to stdout
-
-  private implicit val resultOutput: PrintStream = Console.out
   private val dataverse = new DataverseInstance(configuration.dataverse)
   private val mapper = new DansDataVaultMetadataBlockMapper(configuration.pidGeneratorBaseUrl, dataverse)
 
@@ -39,8 +36,9 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
     for {
       response <- dataverse.dataset(workFlowVariables.pid).view(Version.DRAFT)
       metadata <- response.string
-      _ = debug(s"Found vault metadata ${ response.string }")
+      _ = if (logger.underlying.isDebugEnabled) debug(s"Found metadata ${ response.string }")
       vaultBlockOpt <- getVaultBlockOpt(metadata)
+      _ = if (logger.underlying.isDebugEnabled) debug(s"vaultBlockOpt = $vaultBlockOpt")
       vaultFields <- {
         val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
         val urn = getVaultFieldValue(vaultBlockOpt, "dansNbn")
@@ -50,6 +48,7 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
         mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
       }
       _ <- dataverse.dataset(workFlowVariables.pid).editMetadata(vaultFields, replace = true)
+      _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
     } yield ()
   }
 
