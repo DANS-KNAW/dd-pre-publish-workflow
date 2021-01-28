@@ -27,7 +27,7 @@
 
     <groupId>nl.knaw.dans.dd</groupId>
     <artifactId>dd-pre-publish-workflow</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
 
     <name>Pre-publish workflow handler</name>
     <url>https://github.com/DANS-KNAW/dd-pre-publish-workflow</url>
@@ -40,7 +40,7 @@
 
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/dd-pre-publish-workflow</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.0.1</tag>
     </scm>
 
     <dependencies>
