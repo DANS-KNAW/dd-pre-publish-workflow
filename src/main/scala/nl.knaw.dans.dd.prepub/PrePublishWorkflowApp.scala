@@ -47,7 +47,7 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
         val swordToken = getVaultFieldValue(vaultBlockOpt, "dansSwordToken")
         mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
       }
-      _ <- dataverse.dataset(workFlowVariables.pid).editMetadata(vaultFields, replace = true)
+      _ <- dataverse.dataset(workFlowVariables.pid, workflowId = Option(workFlowVariables.invocationId)).editMetadata(vaultFields, replace = true)
       _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
     } yield ()
   }
