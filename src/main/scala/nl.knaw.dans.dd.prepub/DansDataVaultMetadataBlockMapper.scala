@@ -50,7 +50,7 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
                             optSwordToken: Option[String]): Try[FieldList] = {
     trace(workFlowVariables, optBagId, optNbn, optOtherId, optOtherIdVersion, optSwordToken)
     for {
-      bagId <- setBagId(optBagId, workFlowVariables.pid)
+      bagId <- setBagId(optBagId, workFlowVariables.globalId)
       urn <- optNbn.map(Success(_)).getOrElse(mintUrnNbn())
       fieldList = createFieldList(workFlowVariables, optOtherId, optOtherIdVersion, optSwordToken, bagId, urn)
     } yield fieldList
@@ -65,7 +65,7 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
                              ): FieldList = {
     trace(workFlowVariables, o, ov, st, bagId, urn)
     val fields = ListBuffer[MetadataField]()
-    fields.append(PrimitiveSingleValueField("dansDataversePid", workFlowVariables.pid))
+    fields.append(PrimitiveSingleValueField("dansDataversePid", workFlowVariables.globalId))
     fields.append(PrimitiveSingleValueField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
     fields.append(PrimitiveSingleValueField("dansBagId", bagId))
     fields.append(PrimitiveSingleValueField("dansNbn", urn))

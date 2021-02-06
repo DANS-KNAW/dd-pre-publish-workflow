@@ -15,54 +15,26 @@
  */
 package nl.knaw.dans.dd.prepub
 
-import java.io.PrintStream
-
-import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
-import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
+import nl.knaw.dans.lib.dataverse.DataverseInstance
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.jackson.{ JsonMethods, Serialization }
-import org.json4s.{ DefaultFormats, Formats, JObject }
+import nl.knaw.dans.lib.taskqueue.ActiveTaskQueue
 
 import scala.util.Try
 
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
-  implicit val jsonFormats: Formats = DefaultFormats + MetadataFieldSerializer
-
   private val dataverse = new DataverseInstance(configuration.dataverse)
   private val mapper = new DansDataVaultMetadataBlockMapper(configuration.pidGeneratorBaseUrl, dataverse)
+  private val tasks = new ActiveTaskQueue[WorkFlowVariables]()
 
-  def handleWorkflow(workFlowVariables: WorkFlowVariables): Try[Unit] = {
-    trace(workFlowVariables)
-    for {
-      response <- dataverse.dataset(workFlowVariables.pid).view(Version.DRAFT)
-      metadata <- response.string
-      _ = if (logger.underlying.isDebugEnabled) debug(s"Found metadata ${ response.string }")
-      vaultBlockOpt <- getVaultBlockOpt(metadata)
-      _ = if (logger.underlying.isDebugEnabled) debug(s"vaultBlockOpt = $vaultBlockOpt")
-      vaultFields <- {
-        val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
-        val urn = getVaultFieldValue(vaultBlockOpt, "dansNbn")
-        val otherId = getVaultFieldValue(vaultBlockOpt, "dansOtherId")
-        val otherIdVersion = getVaultFieldValue(vaultBlockOpt, "dansOtherIdVersion")
-        val swordToken = getVaultFieldValue(vaultBlockOpt, "dansSwordToken")
-        mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
-      }
-      _ <- dataverse.dataset(workFlowVariables.pid, workflowId = Option(workFlowVariables.invocationId)).editMetadata(vaultFields, replace = true)
-      _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
-    } yield ()
+  def start(): Try[Unit] = {
+    tasks.start()
   }
 
-  private def getVaultFieldValue(vaultBlockOpt: Option[MetadataBlock], fieldId: String): Option[String] = {
-    vaultBlockOpt.flatMap(_.fields.map(_.asInstanceOf[PrimitiveSingleValueField]).find(_.typeName == fieldId)).map(_.value)
+  def stop(): Try[Unit] = {
+    tasks.stop()
   }
 
-  private def getVaultBlockOpt(metadata: String): Try[Option[MetadataBlock]] = Try {
-    trace(metadata)
-    val vaultBlockJson = JsonMethods.parse(metadata) \\ "dansDataVaultMetadata"
-    if (logger.underlying.isDebugEnabled) debug(Serialization.writePretty(vaultBlockJson))
-    vaultBlockJson match {
-      case JObject(List()) => None
-      case v => Option(v.extract[MetadataBlock])
-    }
+  def scheduleVaultMetadataTask(workFlowVariables: WorkFlowVariables): Try[Unit] = {
+    tasks.add(new SetVaultMetadataTask(workFlowVariables, dataverse, mapper))
   }
 }

@@ -24,7 +24,7 @@ package object prepub {
 
   implicit val jsonFormats: Formats = DefaultFormats + MetadataFieldSerializer
 
-  case class WorkFlowVariables(invocationId: String, pid: String, datasetId: String, majorVersion: String, minorVersion: String)
+  case class WorkFlowVariables(invocationId: String, globalId: String, datasetId: String, majorVersion: String, minorVersion: String)
   case class LockRecord(lockType: String, date: String, user: String)
   case class LockStatusMessage(status: String, data: List[LockRecord])
   case class RequestFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
