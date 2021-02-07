@@ -26,12 +26,11 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance, mapper: DansDataVaultMetadataBlockMapper) extends Task[WorkFlowVariables] with DebugEnhancedLogging {
-  private val maxAttempts = 10 // TODO: make configurable
   private val dataset = dataverse.dataset(workFlowVariables.globalId, Option(workFlowVariables.invocationId))
 
   override def run(): Try[Unit] = {
     (for {
-      _ <- waitUntilWorkflowLockIsSet()
+      _ <- dataset.awaitLock(lockType = "Workflow")
       _ <- editVaultMetadata()
       _ <- dataverse.workflows().resume(workFlowVariables.invocationId)
       _ = logger.info(s"Vault metadata set for dataset ${workFlowVariables.globalId}. Dataset resume called.")
@@ -41,29 +40,6 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
           logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
           dataverse.workflows().resume(workFlowVariables.invocationId, fail = true)
       }
-  }
-
-  private def waitUntilWorkflowLockIsSet(): Try [Unit] = {
-    trace(())
-    var tryIsLockSet = isWorkflowLockSet
-    debug(s"tryIsLockSet = $tryIsLockSet")
-    var attempts = 0
-
-    while(tryIsLockSet.isSuccess && !tryIsLockSet.get && attempts < maxAttempts) {
-      logger.info(s"Workflow not yet set for dataset ${workFlowVariables.datasetId}")
-      attempts += 1
-      Thread.sleep(1000) // TODO: make configurable
-      tryIsLockSet = isWorkflowLockSet
-    }
-    tryIsLockSet.map(_ => ())
-  }
-
-  private def isWorkflowLockSet: Try[Boolean] = {
-    trace(())
-    for {
-      r <- dataset.getLocks
-      locks <- r.data
-    } yield locks.exists(_.lockType == "Workflow")
   }
 
   private def editVaultMetadata(): Try[Unit] = {
