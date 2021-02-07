@@ -50,7 +50,9 @@ object Configuration {
         apiToken = properties.getString("dataverse.api-key"),
         connectionTimeout = properties.getInt("dataverse.connection-timeout-ms"),
         readTimeout = properties.getInt("dataverse.read-timeout-ms"),
-        apiVersion = properties.getString("dataverse.api-version")
+        apiVersion = properties.getString("dataverse.api-version"),
+        awaitLockStateMaxNumberOfRetries = Option(properties.getInt("dataverse.await-lock-max-retries")).getOrElse(10),
+        awaitLockStateMillisecondsBetweenRetries = Option(properties.getInt("dataverse.await-lock-wait-time-ms")).getOrElse(1000),
       ))
   }
 }

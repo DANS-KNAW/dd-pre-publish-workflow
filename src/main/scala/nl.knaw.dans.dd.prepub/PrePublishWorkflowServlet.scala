@@ -38,15 +38,15 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
     val requestBodyJson = JsonMethods.parse(request.body)
     //TODO: extract directly from request body -> JsonMethods.parse(request.body).extract[WorkFlowVariables]
     val invocationId = (requestBodyJson \ "invocationId").extract[String]
-    val datasetIdentifier = (requestBodyJson \ "globalId").extract[String]
+    val globalId = (requestBodyJson \ "globalId").extract[String]
     val datasetId = (requestBodyJson \ "datasetId").extract[String]
     val majorVersion = (requestBodyJson \ "majorVersion").extract[String]
     val minorVersion = (requestBodyJson \ "minorVersion").extract[String]
-    val workflowVariables = WorkFlowVariables(invocationId, datasetIdentifier, datasetId, majorVersion, minorVersion)
+    val workflowVariables = WorkFlowVariables(invocationId, globalId, datasetId, majorVersion, minorVersion)
 
-    app.handleWorkflow(workflowVariables)
-      .doIfSuccess { _ => logger.info("Workflow finished successfully") }
-      .doIfFailure { case e => logger.error("Workflow failed", e) }
+    app.scheduleVaultMetadataTask(workflowVariables)
+      .doIfSuccess { _ => logger.info("Task was successfully scheduled.") }
+      .doIfFailure { case e => logger.error("Task could not be scheduled ", e) }
     match {
       case Success(_) => Ok()
       /*
@@ -58,6 +58,7 @@ class PrePublishWorkflowServlet(app: PrePublishWorkflowApp,
     }
   }
 
+  // TODO: do we need to implement this?
   post("/rollback") {
     contentType = "application/json"
     trace(request.body)
