@@ -47,16 +47,12 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     for {
       response <- dataset.view(Version.DRAFT)
       metadata <- response.string
-      _ = if (logger.underlying.isDebugEnabled) debug(s"Found metadata ${ response.string }")
       vaultBlockOpt <- getVaultBlockOpt(metadata)
       _ = if (logger.underlying.isDebugEnabled) debug(s"vaultBlockOpt = $vaultBlockOpt")
       vaultFields <- {
         val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
         val urn = getVaultFieldValue(vaultBlockOpt, "dansNbn")
-        val otherId = getVaultFieldValue(vaultBlockOpt, "dansOtherId")
-        val otherIdVersion = getVaultFieldValue(vaultBlockOpt, "dansOtherIdVersion")
-        val swordToken = getVaultFieldValue(vaultBlockOpt, "dansSwordToken")
-        mapper.createDataVaultFields(workFlowVariables, bagId, urn, otherId, otherIdVersion, swordToken)
+        mapper.createDataVaultFields(workFlowVariables, bagId, urn)
       }
       _ <- dataset.editMetadata(vaultFields, replace = true)
       _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
