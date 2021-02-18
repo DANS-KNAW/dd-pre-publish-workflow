@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dd.prepub
 
+import nl.knaw.dans.lib.dataverse.model.ResumeMessage
 import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -32,13 +33,14 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     (for {
       _ <- dataset.awaitLock(lockType = "Workflow")
       _ <- editVaultMetadata()
-      _ <- dataverse.workflows().resume(workFlowVariables.invocationId)
+      _ = Thread.sleep(5000)
+      _ <- dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Success", Message = "", Reason = ""))
       _ = logger.info(s"Vault metadata set for dataset ${workFlowVariables.globalId}. Dataset resume called.")
     } yield ())
       .recover {
         case NonFatal(e) =>
           logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
-          dataverse.workflows().resume(workFlowVariables.invocationId, fail = true)
+          dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Failure", Message = "", Reason = s"${e.getMessage}"))
       }
   }
 
