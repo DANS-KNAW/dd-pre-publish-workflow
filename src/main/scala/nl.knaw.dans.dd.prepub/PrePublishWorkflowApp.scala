@@ -35,6 +35,6 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
   }
 
   def scheduleVaultMetadataTask(workFlowVariables: WorkFlowVariables): Try[Unit] = {
-    tasks.add(new SetVaultMetadataTask(workFlowVariables, dataverse, mapper))
+    tasks.add(new SetVaultMetadataTask(workFlowVariables, dataverse, mapper, configuration.AwaitWorkflowPausedStateMaxNumberOfRetries, configuration.AwaitWorkflowPausedStateMillisecondsBetweenRetries))
   }
 }

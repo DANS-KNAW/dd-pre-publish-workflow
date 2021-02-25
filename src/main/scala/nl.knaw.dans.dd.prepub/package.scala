@@ -63,4 +63,6 @@ package object prepub {
   }
   ))
 
+  case class WorkflowNotPausedException(numberOfTimesTried: Int, waitTimeInMilliseconds: Int) extends RuntimeException(s"Workflow was not paused. Number of tries = $numberOfTimesTried, wait time between tries = $waitTimeInMilliseconds ms.")
+
 }

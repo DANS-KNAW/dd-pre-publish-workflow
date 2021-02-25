@@ -28,7 +28,9 @@ class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers {
     version = "my-version",
     serverPort = 12345,
     pidGeneratorBaseUrl = new URI("http://dummy"),
-    dataverse = null
+    dataverse = null,
+    AwaitWorkflowPausedStateMaxNumberOfRetries = 0,
+    AwaitWorkflowPausedStateMillisecondsBetweenRetries = 0
   )
 
   private val clo = new CommandLineOptions(Array[String](), configuration) {

@@ -17,29 +17,61 @@ package nl.knaw.dans.dd.prepub
 
 import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
+import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.taskqueue.Task
 import org.json4s.JsonAST.JObject
 import org.json4s.jackson.{ JsonMethods, Serialization }
 
-import scala.util.Try
+import java.lang.Thread._
+import java.net.HttpURLConnection._
 import scala.util.control.NonFatal
+import scala.util.{ Failure, Success, Try }
 
-class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance, mapper: DansDataVaultMetadataBlockMapper) extends Task[WorkFlowVariables] with DebugEnhancedLogging {
+class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance, mapper: DansDataVaultMetadataBlockMapper, maxNumberOfRetries: Int, timeBetweenRetries: Int) extends Task[WorkFlowVariables] with DebugEnhancedLogging {
   private val dataset = dataverse.dataset(workFlowVariables.globalId, Option(workFlowVariables.invocationId))
 
   override def run(): Try[Unit] = {
     (for {
       _ <- dataset.awaitLock(lockType = "Workflow")
       _ <- editVaultMetadata()
-      _ <- dataverse.workflows().resume(workFlowVariables.invocationId)
-      _ = logger.info(s"Vault metadata set for dataset ${workFlowVariables.globalId}. Dataset resume called.")
+      _ <- resumeWorkflow(dataverse, workFlowVariables.invocationId, maxNumberOfRetries, timeBetweenRetries)
+      _ = logger.info(s"Vault metadata set for dataset ${ workFlowVariables.globalId }. Dataset resume called.")
     } yield ())
       .recover {
         case NonFatal(e) =>
           logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
           dataverse.workflows().resume(workFlowVariables.invocationId, fail = true)
       }
+  }
+
+  private def resumeWorkflow(dataverse: DataverseInstance, invocationId: String, maxNumberOfRetries: Int, timeBetweenRetries: Int): Try[Unit] = {
+    trace(maxNumberOfRetries, timeBetweenRetries)
+    var numberOfTimesTried = 0
+    var isError = true
+
+    do {
+      isError = getResumeResponse(dataverse: DataverseInstance, invocationId: String).unsafeGetOrThrow
+      if (isError) {
+        debug(s"Sleeping ${ timeBetweenRetries } ms before next try..")
+        sleep(timeBetweenRetries)
+        numberOfTimesTried += 1
+      }
+    } while (numberOfTimesTried <= maxNumberOfRetries && isError)
+
+    if (isError) {
+      logger.error(s"Workflow could not be resumed. Number of retries: $maxNumberOfRetries. Time between retries: $timeBetweenRetries")
+      Failure(WorkflowNotPausedException(maxNumberOfRetries, timeBetweenRetries))
+    }
+    else {
+      Success(())
+    }
+  }
+
+  private def getResumeResponse(dataverse: DataverseInstance, invocationId: String): Try[Boolean] = {
+    dataverse.workflows()
+      .resume(invocationId)
+      .map(_.httpResponse.code == HTTP_NOT_FOUND)
   }
 
   private def editVaultMetadata(): Try[Unit] = {
