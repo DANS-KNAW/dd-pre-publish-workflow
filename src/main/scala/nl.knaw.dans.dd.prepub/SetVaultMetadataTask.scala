@@ -16,7 +16,7 @@
 package nl.knaw.dans.dd.prepub
 
 import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
-import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
+import nl.knaw.dans.lib.dataverse.{ DataverseException, DataverseInstance, DataverseResponse, Version }
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.taskqueue.Task
@@ -24,7 +24,6 @@ import org.json4s.JsonAST.JObject
 import org.json4s.jackson.{ JsonMethods, Serialization }
 
 import java.lang.Thread._
-import java.net.HttpURLConnection._
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
@@ -40,38 +39,58 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     } yield ())
       .recover {
         case NonFatal(e) =>
-          logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
+          logger.error(s"SetVaultMetadataTask for dataset ${ workFlowVariables.globalId } failed. Resuming dataset with 'fail=true'", e)
           dataverse.workflows().resume(workFlowVariables.invocationId, fail = true)
       }
   }
 
+  /**
+   * Executes the workflow resume call and checks the response.
+   * If the workflow has not been paused yet by dataverse a rc 404 (Not Found) is returned and after a waiting period a subsequent resume call is made.
+   * If after the maximum number of retries the workflow is still not paused, the workflow fails.
+   *
+   * @param dataverse
+   * @param invocationId
+   * @param maxNumberOfRetries
+   * @param timeBetweenRetries
+   * @return Success if the resume call succeeded, otherwise a Failure.
+   */
   private def resumeWorkflow(dataverse: DataverseInstance, invocationId: String, maxNumberOfRetries: Int, timeBetweenRetries: Int): Try[Unit] = {
     trace(maxNumberOfRetries, timeBetweenRetries)
     var numberOfTimesTried = 0
-    var isError = true
+    var notPausedError = true
 
     do {
-      isError = getResumeResponse(dataverse: DataverseInstance, invocationId: String).unsafeGetOrThrow
-      if (isError) {
-        debug(s"Sleeping ${ timeBetweenRetries } ms before next try..")
+      val resumeResponse = dataverse.workflows().resume(invocationId)
+      notPausedError = checkResponseForPausedError(resumeResponse, invocationId).unsafeGetOrThrow
+
+      if (notPausedError) {
+        debug(s"Sleeping $timeBetweenRetries ms before next try..")
         sleep(timeBetweenRetries)
         numberOfTimesTried += 1
       }
-    } while (numberOfTimesTried <= maxNumberOfRetries && isError)
+    } while (numberOfTimesTried <= maxNumberOfRetries && notPausedError)
 
-    if (isError) {
-      logger.error(s"Workflow could not be resumed. Number of retries: $maxNumberOfRetries. Time between retries: $timeBetweenRetries")
+    if (notPausedError) {
+      logger.error(s"Workflow could not be resumed for dataset ${ workFlowVariables.globalId }. Number of retries: $maxNumberOfRetries. Time between retries: $timeBetweenRetries")
       Failure(WorkflowNotPausedException(maxNumberOfRetries, timeBetweenRetries))
     }
-    else {
-      Success(())
-    }
+    else Success(())
   }
 
-  private def getResumeResponse(dataverse: DataverseInstance, invocationId: String): Try[Boolean] = {
-    dataverse.workflows()
-      .resume(invocationId)
-      .map(_.httpResponse.code == HTTP_NOT_FOUND)
+  /**
+   *
+   * @param resumeResponse
+   * @param invocationId
+   * @return true if resume call returns a 404
+   */
+  private def checkResponseForPausedError(resumeResponse: Try[DataverseResponse[Nothing]], invocationId: String): Try[Boolean] = {
+    resumeResponse match {
+      case Success(_) => Success(false)
+      //TODO: how to get a statuscode from an exception?
+      case Failure(e) if e.isInstanceOf[DataverseException] => Success(true)
+      case Failure(e) => Failure(ExternalSystemCallException(s"Resume could not be called for dataset: $invocationId ", e))
+    }
   }
 
   private def editVaultMetadata(): Try[Unit] = {
