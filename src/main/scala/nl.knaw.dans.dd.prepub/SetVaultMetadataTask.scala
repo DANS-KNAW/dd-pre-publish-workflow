@@ -24,6 +24,7 @@ import org.json4s.JsonAST.JObject
 import org.json4s.jackson.{ JsonMethods, Serialization }
 
 import java.lang.Thread._
+import java.net.HttpURLConnection._
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
@@ -85,12 +86,9 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
    * @return true if resume call returns a 404
    */
   private def checkResponseForPausedError(resumeResponse: Try[DataverseResponse[Nothing]], invocationId: String): Try[Boolean] = {
-    resumeResponse match {
-      case Success(_) => Success(false)
-      //TODO: how to get a statuscode from an exception?
-      case Failure(e) if e.isInstanceOf[DataverseException] => Success(true)
-      case Failure(e) => Failure(ExternalSystemCallException(s"Resume could not be called for dataset: $invocationId ", e))
-    }
+    resumeResponse.map(_.httpResponse.isError)
+      .recover { case e: DataverseException if e.status == HTTP_NOT_FOUND => true }
+      .recoverWith { case e: Throwable => Failure(ExternalSystemCallException(s"Resume could not be called for dataset: $invocationId ", e)) }
   }
 
   private def editVaultMetadata(): Try[Unit] = {
