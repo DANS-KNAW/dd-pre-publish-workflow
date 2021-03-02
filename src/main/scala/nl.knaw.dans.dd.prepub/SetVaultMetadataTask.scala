@@ -33,14 +33,13 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     (for {
       _ <- dataset.awaitLock(lockType = "Workflow")
       _ <- editVaultMetadata()
-      _ = Thread.sleep(5000)
       _ <- dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Success", Message = "", Reason = ""))
       _ = logger.info(s"Vault metadata set for dataset ${workFlowVariables.globalId}. Dataset resume called.")
     } yield ())
       .recover {
         case NonFatal(e) =>
           logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
-          dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Failure", Message = "", Reason = s"${e.getMessage}"))
+          dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Failure", Message = "Publication failed: pre-publication workflow returned an error", Reason = s"${e.getMessage}"))
       }
   }
 
