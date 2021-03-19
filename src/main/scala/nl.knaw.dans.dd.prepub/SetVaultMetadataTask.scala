@@ -41,8 +41,8 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     } yield ())
       .recover {
         case NonFatal(e) =>
-          logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
-          dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Failure", Message = "Publication failed: pre-publication workflow returned an error", Reason = s"${e.getMessage}"))
+          logger.error(s"SetVaultMetadataTask for dataset ${ workFlowVariables.globalId } failed. Resuming dataset with 'fail=true'", e)
+          dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Failure", Message = "Publication failed: pre-publication workflow returned an error", Reason = s"${ e.getMessage }"))
       }
   }
 
@@ -60,22 +60,22 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
   private def resumeWorkflow(dataverse: DataverseInstance, invocationId: String, maxNumberOfRetries: Int, timeBetweenRetries: Int): Try[Unit] = {
     trace(maxNumberOfRetries, timeBetweenRetries)
     var numberOfTimesTried = 0
-    var notPausedError = true
+    var invocationIdNotFound = true
 
     do {
       val resumeResponse = dataverse.workflows().resume(invocationId, ResumeMessage(Status = "Success", Message = "", Reason = ""))
-      notPausedError = checkResponseForPausedError(resumeResponse, invocationId).unsafeGetOrThrow
+      invocationIdNotFound = checkForInvocationIdNotFoundError(resumeResponse, invocationId).unsafeGetOrThrow
 
-      if (notPausedError) {
+      if (invocationIdNotFound) {
         debug(s"Sleeping $timeBetweenRetries ms before next try..")
         sleep(timeBetweenRetries)
         numberOfTimesTried += 1
       }
-    } while (numberOfTimesTried <= maxNumberOfRetries && notPausedError)
+    } while (numberOfTimesTried <= maxNumberOfRetries && invocationIdNotFound)
 
-    if (notPausedError) {
+    if (invocationIdNotFound) {
       logger.error(s"Workflow could not be resumed for dataset ${ workFlowVariables.globalId }. Number of retries: $maxNumberOfRetries. Time between retries: $timeBetweenRetries")
-      Failure(WorkflowNotPausedException(maxNumberOfRetries, timeBetweenRetries))
+      Failure(InvocationIdNotFoundException(maxNumberOfRetries, timeBetweenRetries))
     }
     else Success(())
   }
@@ -86,7 +86,7 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
    * @param invocationId
    * @return true if resume call returns a 404
    */
-  private def checkResponseForPausedError(resumeResponse: Try[DataverseResponse[Nothing]], invocationId: String): Try[Boolean] = {
+  private def checkForInvocationIdNotFoundError(resumeResponse: Try[DataverseResponse[Nothing]], invocationId: String): Try[Boolean] = {
     resumeResponse.map(_.httpResponse.isError)
       .recover { case e: DataverseException if e.status == HTTP_NOT_FOUND => true }
       .recoverWith { case e: Throwable => Failure(ExternalSystemCallException(s"Resume could not be called for dataset: $invocationId ", e)) }

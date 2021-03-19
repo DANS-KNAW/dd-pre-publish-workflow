@@ -26,8 +26,8 @@ case class Configuration(version: String,
                          serverPort: Int,
                          pidGeneratorBaseUrl: URI,
                          dataverse: DataverseInstanceConfig,
-                         AwaitWorkflowPausedStateMaxNumberOfRetries: Int,
-                         AwaitWorkflowPausedStateMillisecondsBetweenRetries: Int,
+                         awaitWorkflowPausedStateMaxNumberOfRetries: Int,
+                         awaitWorkflowPausedStateMillisecondsBetweenRetries: Int,
                         )
 
 object Configuration {
@@ -56,8 +56,8 @@ object Configuration {
         awaitLockStateMaxNumberOfRetries = Option(properties.getInt("dataverse.await-lock-max-retries")).getOrElse(10),
         awaitLockStateMillisecondsBetweenRetries = Option(properties.getInt("dataverse.await-lock-wait-time-ms")).getOrElse(1000),
       ),
-      AwaitWorkflowPausedStateMaxNumberOfRetries = properties.getInt("dataverse.await-workflow-paused-max-retries"),
-      AwaitWorkflowPausedStateMillisecondsBetweenRetries = properties.getInt("dataverse.await-workflow-paused-time-ms")
+      awaitWorkflowPausedStateMaxNumberOfRetries = properties.getInt("dataverse.await-workflow-paused-max-retries"),
+      awaitWorkflowPausedStateMillisecondsBetweenRetries = properties.getInt("dataverse.await-workflow-paused-time-ms")
     )
   }
 }

@@ -29,6 +29,7 @@ package object prepub {
   case class LockStatusMessage(status: String, data: List[LockRecord])
   case class RequestFailedException(status: Int, msg: String, body: String) extends Exception(s"Command could not be executed. Server returned: status line: '$msg', body: '$body'")
   case class ExternalSystemCallException(msg: String, cause: Throwable) extends RuntimeException(msg, cause)
+  case class InvocationIdNotFoundException(numberOfTimesTried: Int, waitTimeInMilliseconds: Int) extends RuntimeException(s"Workflow was not paused. Number of tries = $numberOfTimesTried, wait time between tries = $waitTimeInMilliseconds ms.")
 
   type JsonObject = Map[String, MetadataField]
 
@@ -62,7 +63,5 @@ package object prepub {
     case null => JNull
   }
   ))
-
-  case class WorkflowNotPausedException(numberOfTimesTried: Int, waitTimeInMilliseconds: Int) extends RuntimeException(s"Workflow was not paused. Number of tries = $numberOfTimesTried, wait time between tries = $waitTimeInMilliseconds ms.")
 
 }
