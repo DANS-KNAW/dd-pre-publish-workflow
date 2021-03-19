@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dd.prepub
 
+import nl.knaw.dans.lib.dataverse.model.ResumeMessage
 import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseException, DataverseInstance, DataverseResponse, Version }
 import nl.knaw.dans.lib.error.TryExtensions
@@ -40,8 +41,8 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     } yield ())
       .recover {
         case NonFatal(e) =>
-          logger.error(s"SetVaultMetadataTask for dataset ${ workFlowVariables.globalId } failed. Resuming dataset with 'fail=true'", e)
-          dataverse.workflows().resume(workFlowVariables.invocationId, fail = true)
+          logger.error(s"SetVaultMetadataTask for dataset ${workFlowVariables.globalId} failed. Resuming dataset with 'fail=true'", e)
+          dataverse.workflows().resume(workFlowVariables.invocationId, ResumeMessage(Status = "Failure", Message = "Publication failed: pre-publication workflow returned an error", Reason = s"${e.getMessage}"))
       }
   }
 
@@ -62,7 +63,7 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     var notPausedError = true
 
     do {
-      val resumeResponse = dataverse.workflows().resume(invocationId)
+      val resumeResponse = dataverse.workflows().resume(invocationId, ResumeMessage(Status = "Success", Message = "", Reason = ""))
       notPausedError = checkResponseForPausedError(resumeResponse, invocationId).unsafeGetOrThrow
 
       if (notPausedError) {

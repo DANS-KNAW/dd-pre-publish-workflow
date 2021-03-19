@@ -3,7 +3,7 @@
   "steps": [
     {
       "provider":":internal",
-      "stepType":"http/sr",
+      "stepType":"http/authExt",
       "parameters": {
         "url":"http://localhost:20210/workflow",
         "method":"POST",
