@@ -15,17 +15,19 @@
  */
 package nl.knaw.dans.dd.prepub
 
-import java.net.URI
-
 import better.files.File
 import better.files.File.root
 import nl.knaw.dans.lib.dataverse.DataverseInstanceConfig
 import org.apache.commons.configuration.PropertiesConfiguration
 
+import java.net.URI
+
 case class Configuration(version: String,
                          serverPort: Int,
                          pidGeneratorBaseUrl: URI,
-                         dataverse: DataverseInstanceConfig
+                         dataverse: DataverseInstanceConfig,
+                         awaitWorkflowPausedStateMaxNumberOfRetries: Int,
+                         awaitWorkflowPausedStateMillisecondsBetweenRetries: Int,
                         )
 
 object Configuration {
@@ -53,7 +55,10 @@ object Configuration {
         apiVersion = properties.getString("dataverse.api-version"),
         awaitLockStateMaxNumberOfRetries = Option(properties.getInt("dataverse.await-lock-max-retries")).getOrElse(10),
         awaitLockStateMillisecondsBetweenRetries = Option(properties.getInt("dataverse.await-lock-wait-time-ms")).getOrElse(1000),
-      ))
+      ),
+      awaitWorkflowPausedStateMaxNumberOfRetries = properties.getInt("dataverse.await-workflow-paused-max-retries"),
+      awaitWorkflowPausedStateMillisecondsBetweenRetries = properties.getInt("dataverse.await-workflow-paused-time-ms")
+    )
   }
 }
 
