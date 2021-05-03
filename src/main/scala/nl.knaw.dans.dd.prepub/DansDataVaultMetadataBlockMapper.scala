@@ -49,8 +49,8 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
          * only None if optLatestPublishedBagId is also None, that is if there is no previous version.
          */
         else {
-          if (optFoundBagId.isEmpty) throw new IllegalArgumentException("Dataset with a latest published version without bag ID found!")
-          optFoundBagId.get
+          if (optLatestPublishedBagId.isEmpty) throw new IllegalArgumentException("Dataset with a latest published version without bag ID found!")
+          optLatestPublishedBagId.get
         }
     }
   }
@@ -66,6 +66,7 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
             .map(_.asInstanceOf[PrimitiveSingleValueField])
             .find(_.typeName == "dansBagId"))
           .map(_.value)
+        _ = debug(s"optBagId = $optBagId")
       } yield optBagId
     }
     else Success(None)
