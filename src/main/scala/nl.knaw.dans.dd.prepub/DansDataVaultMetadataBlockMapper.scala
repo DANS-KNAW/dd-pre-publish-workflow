@@ -45,12 +45,12 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
       optLatestPublishedBagId =>
         if (optLatestPublishedBagId == optFoundBagId) mintBagId()
         /* If the latest published bag ID is found, it *should* also be in the draft deposit (i.e. in optFoundBagId), because
-         * metadata fields get pre-filled with the latest versions. This means it *should* be safe to assume tha optFoundBagId is
+         * metadata fields get pre-filled with the latest versions. This means it *should* be safe to assume that optFoundBagId is
          * only None if optLatestPublishedBagId is also None, that is if there is no previous version.
          */
         else {
-          if (optLatestPublishedBagId.isEmpty) throw new IllegalArgumentException("Dataset with a latest published version without bag ID found!")
-          optLatestPublishedBagId.get
+          if (optFoundBagId.isEmpty) throw new IllegalArgumentException("Dataset with a latest published version without bag ID found!")
+          optFoundBagId.get
         }
     }
   }
