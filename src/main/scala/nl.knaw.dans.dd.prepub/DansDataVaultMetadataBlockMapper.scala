@@ -18,15 +18,13 @@ package nl.knaw.dans.dd.prepub
 import nl.knaw.dans.lib.dataverse.model.dataset.{ FieldList, MetadataField, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseInstance, Version }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import scalaj.http.Http
 
-import java.net.URI
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
-import scala.util.control.NonFatal
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Success, Try }
 
-class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: DataverseInstance) extends DebugEnhancedLogging {
+class DansDataVaultMetadataBlockMapper(nbnPrefix: String, dataverse: DataverseInstance) extends DebugEnhancedLogging {
+  require(nbnPrefix != null)
 
   def createDataVaultFields(workFlowVariables: WorkFlowVariables,
                             optBagId: Option[String],
@@ -34,7 +32,7 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
     trace(workFlowVariables, optBagId, optNbn)
     for {
       bagId <- getBagId(optBagId, workFlowVariables)
-      urn <- optNbn.map(Success(_)).getOrElse(mintUrnNbn())
+      urn = optNbn.getOrElse(mintUrnNbn())
       fieldList = createFieldList(workFlowVariables, bagId, urn)
     } yield fieldList
   }
@@ -89,16 +87,13 @@ class DansDataVaultMetadataBlockMapper(pidGeneratorBaseUrl: URI, dataverse: Data
     FieldList(fields.toList)
   }
 
-  def mintUrnNbn(): Try[String] = Try {
+  def mintUrnNbn(): String = {
     trace(())
-    Http(s"${ pidGeneratorBaseUrl resolve "create" }?type=urn")
-      .method("POST")
-      .header("Accept", "application/json")
-      .asString.body
-  }.recoverWith { case NonFatal(e) => Failure(ExternalSystemCallException(s"Problem calling pid-generator service", e)) }
+    "urn:nbn:" + nbnPrefix + UUID.randomUUID().toString
+  }
 
   def mintBagId(): String = {
     trace(())
-    s"urn:uuid:${ UUID.randomUUID().toString }"
+    "urn:uuid:" + UUID.randomUUID().toString
   }
 }

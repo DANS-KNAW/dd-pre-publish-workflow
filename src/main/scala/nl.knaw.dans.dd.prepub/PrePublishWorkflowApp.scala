@@ -23,7 +23,7 @@ import scala.util.Try
 
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
   private val dataverse = new DataverseInstance(configuration.dataverse)
-  private val mapper = new DansDataVaultMetadataBlockMapper(configuration.pidGeneratorBaseUrl, dataverse)
+  private val mapper = new DansDataVaultMetadataBlockMapper(configuration.nbnPrefix, dataverse)
   private val tasks = new ActiveTaskQueue[WorkFlowVariables]()
 
   def start(): Try[Unit] = {

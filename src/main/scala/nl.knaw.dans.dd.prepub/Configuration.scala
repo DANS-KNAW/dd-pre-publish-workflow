@@ -24,7 +24,7 @@ import java.net.URI
 
 case class Configuration(version: String,
                          serverPort: Int,
-                         pidGeneratorBaseUrl: URI,
+                         nbnPrefix: String,
                          dataverse: DataverseInstanceConfig,
                          awaitWorkflowPausedStateMaxNumberOfRetries: Int,
                          awaitWorkflowPausedStateMillisecondsBetweenRetries: Int,
@@ -46,7 +46,7 @@ object Configuration {
     new Configuration(
       version = (home / "bin" / "version").contentAsString.stripLineEnd,
       serverPort = properties.getInt("daemon.http.port"),
-      pidGeneratorBaseUrl = new URI(properties.getString("pid-generator.base-url") + "/"),
+      nbnPrefix = properties.getString("nbn.prefix"),
       dataverse = DataverseInstanceConfig(
         baseUrl = new URI(properties.getString("dataverse.base-url")),
         apiToken = properties.getString("dataverse.api-key"),
