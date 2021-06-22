@@ -63,8 +63,8 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
           .getOrElse(throw new IllegalStateException("Found published dataset-version without NBN")))
         .getOrElse(getVaultMetadataFieldValue(draftDsv, "dansNbn")
           .getOrElse(mintUrnNbn()))
-      vaultFieldToUpdate = createFieldList(workFlowVariables, bagId, nbn)
-      _ <- dataset.editMetadata(vaultFieldToUpdate, replace = true)
+      vaultFieldsToUpdate = createFieldList(workFlowVariables, bagId, nbn)
+      _ <- dataset.editMetadata(vaultFieldsToUpdate, replace = true)
       _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
     } yield ()
   }
@@ -101,23 +101,6 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     }
   }
 
-  private def getLatestPublishedBagId(w: WorkFlowVariables): Try[Option[String]] = {
-    if (hasLatestPublishedVersion(w)) {
-      for {
-        response <- dataverse.dataset(w.globalId).view(Version.LATEST_PUBLISHED)
-        _ = if (logger.underlying.isDebugEnabled) debug(s"Successfully retrieved latest published metadata: ${ response.string }")
-        dsv <- response.data
-        optBagId = dsv.metadataBlocks.get("dansDataVaultMetadata")
-          .flatMap(_.fields
-            .map(_.asInstanceOf[PrimitiveSingleValueField])
-            .find(_.typeName == "dansBagId"))
-          .map(_.value)
-        _ = debug(s"optBagId = $optBagId")
-      } yield optBagId
-    }
-    else Success(None)
-  }
-
   private def getVaultMetadataFieldValue(dsv: DatasetVersion, fieldId: String): Option[String] = {
     dsv.metadataBlocks.get("dansDataVaultMetadata")
       .flatMap(_.fields
@@ -143,12 +126,12 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     FieldList(fields.toList)
   }
 
-  def mintUrnNbn(): String = {
+  private def mintUrnNbn(): String = {
     trace(())
     "urn:nbn:" + nbnPrefix + UUID.randomUUID().toString
   }
 
-  def mintBagId(): String = {
+  private def mintBagId(): String = {
     trace(())
     "urn:uuid:" + UUID.randomUUID().toString
   }
