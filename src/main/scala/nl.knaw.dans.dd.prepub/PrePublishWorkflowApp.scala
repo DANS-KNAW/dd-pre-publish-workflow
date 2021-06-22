@@ -23,7 +23,6 @@ import scala.util.Try
 
 class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedLogging {
   private val dataverse = new DataverseInstance(configuration.dataverse)
-  private val mapper = new DansDataVaultMetadataBlockMapper(configuration.nbnPrefix, dataverse)
   private val tasks = new ActiveTaskQueue[WorkFlowVariables]()
 
   def start(): Try[Unit] = {
@@ -35,6 +34,11 @@ class PrePublishWorkflowApp(configuration: Configuration) extends DebugEnhancedL
   }
 
   def scheduleVaultMetadataTask(workFlowVariables: WorkFlowVariables): Try[Unit] = {
-    tasks.add(new SetVaultMetadataTask(workFlowVariables, dataverse, mapper, configuration.awaitWorkflowPausedStateMaxNumberOfRetries, configuration.awaitWorkflowPausedStateMillisecondsBetweenRetries))
+    tasks.add(
+      new SetVaultMetadataTask(workFlowVariables,
+        dataverse,
+        configuration.nbnPrefix,
+        configuration.awaitWorkflowPausedStateMaxNumberOfRetries,
+        configuration.awaitWorkflowPausedStateMillisecondsBetweenRetries))
   }
 }

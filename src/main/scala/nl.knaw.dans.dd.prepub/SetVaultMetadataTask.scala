@@ -16,27 +16,28 @@
 package nl.knaw.dans.dd.prepub
 
 import nl.knaw.dans.lib.dataverse.model.ResumeMessage
-import nl.knaw.dans.lib.dataverse.model.dataset.{ MetadataBlock, PrimitiveSingleValueField }
+import nl.knaw.dans.lib.dataverse.model.dataset.{ DatasetVersion, FieldList, MetadataField, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseException, DataverseInstance, DataverseResponse, Version }
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.taskqueue.Task
-import org.json4s.JsonAST.JObject
-import org.json4s.jackson.{ JsonMethods, Serialization }
 
 import java.lang.Thread._
 import java.net.HttpURLConnection._
+import java.util.UUID
+import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
-class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance, mapper: DansDataVaultMetadataBlockMapper, maxNumberOfRetries: Int, timeBetweenRetries: Int) extends Task[WorkFlowVariables] with DebugEnhancedLogging {
+class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: DataverseInstance, nbnPrefix: String, maxNumberOfRetries: Int, timeBetweenRetries: Int) extends Task[WorkFlowVariables] with DebugEnhancedLogging {
+  require(nbnPrefix != null)
   private val dataset = dataverse.dataset(workFlowVariables.globalId, Option(workFlowVariables.invocationId))
 
   override def run(): Try[Unit] = {
     (for {
       _ <- dataset.awaitLock(lockType = "Workflow")
       _ <- editVaultMetadata()
-      _ <- resumeWorkflow(dataverse, workFlowVariables.invocationId, maxNumberOfRetries, timeBetweenRetries)
+      _ <- resumeWorkflow(workFlowVariables.invocationId)
       _ = logger.info(s"Vault metadata set for dataset ${ workFlowVariables.globalId }. Dataset resume called.")
     } yield ())
       .recover {
@@ -46,18 +47,96 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
       }
   }
 
-  /**
-   * Executes the workflow resume call and checks the response.
-   * If the workflow has not been paused yet by dataverse a rc 404 (Not Found) is returned and after a waiting period a subsequent resume call is made.
-   * If after the maximum number of retries the workflow is still not paused, the workflow fails.
-   *
-   * @param dataverse
-   * @param invocationId
-   * @param maxNumberOfRetries
-   * @param timeBetweenRetries
-   * @return Success if the resume call succeeded, otherwise a Failure.
-   */
-  private def resumeWorkflow(dataverse: DataverseInstance, invocationId: String, maxNumberOfRetries: Int, timeBetweenRetries: Int): Try[Unit] = {
+  override def getTarget: WorkFlowVariables = {
+    workFlowVariables
+  }
+
+  private def editVaultMetadata(): Try[Unit] = {
+    trace(())
+    for {
+      draftDsv <- getDatasetVersion(Version.DRAFT)
+      optLatestPublishedDsv <- if (hasLatestPublishedVersion(workFlowVariables)) getDatasetVersion(Version.LATEST_PUBLISHED).map(Option(_))
+                               else Success(None)
+      bagId = getBagId(getVaultMetadataFieldValue(draftDsv, "dansBagId"), optLatestPublishedDsv, workFlowVariables)
+      nbn = optLatestPublishedDsv
+        .map(pdsv => getVaultMetadataFieldValue(pdsv, "dansNbn")
+          .getOrElse(throw new IllegalStateException("Found published dataset-version without NBN")))
+        .getOrElse(getVaultMetadataFieldValue(draftDsv, "dansNbn")
+          .getOrElse(mintUrnNbn()))
+      vaultFieldsToUpdate = createFieldList(workFlowVariables, bagId, nbn)
+      _ <- dataset.editMetadata(vaultFieldsToUpdate, replace = true)
+      _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
+    } yield ()
+  }
+
+  private def getDatasetVersion(version: Version): Try[DatasetVersion] = {
+    for {
+      response <- dataset.view(version)
+      dsv <- response.data
+    } yield dsv
+  }
+
+  private def getBagId(optFoundBagId: Option[String], optLatestPublishedDatasetVersion: Option[DatasetVersion], w: WorkFlowVariables): String = {
+    trace(optFoundBagId, w)
+    optLatestPublishedDatasetVersion.map {
+      latestPublishedDsv => { // Draft of version > 1.0
+        val latestPublishedBagId = getVaultMetadataFieldValue(latestPublishedDsv, "dansBagId")
+          .getOrElse(throw new IllegalArgumentException("Dataset with a latest published version without bag ID found!"))
+        if (optFoundBagId.isEmpty || latestPublishedBagId == optFoundBagId.get) {
+          /*
+           * This happens after publishing a new version via the UI. The bagId from the previous version is inherited by the new draft. However, we
+           * want every version to have a unique bagId.
+           */
+          mintBagId()
+        }
+        else {
+          /*
+           * Provided by machine deposit.
+           */
+          optFoundBagId.get
+        }
+      }
+    }.getOrElse { // Draft of version 1.0
+      optFoundBagId.getOrElse(mintBagId())
+    }
+  }
+
+  private def getVaultMetadataFieldValue(dsv: DatasetVersion, fieldId: String): Option[String] = {
+    dsv.metadataBlocks.get("dansDataVaultMetadata")
+      .flatMap(_.fields
+        .map(_.asInstanceOf[PrimitiveSingleValueField])
+        .find(_.typeName == fieldId))
+      .map(_.value)
+  }
+
+  private def hasLatestPublishedVersion(w: WorkFlowVariables): Boolean = {
+    s"${ w.majorVersion }.${ w.minorVersion }" != "1.0"
+  }
+
+  private def createFieldList(workFlowVariables: WorkFlowVariables,
+                              bagId: String,
+                              nbn: String,
+                             ): FieldList = {
+    trace(workFlowVariables, bagId, nbn)
+    val fields = ListBuffer[MetadataField]()
+    fields.append(PrimitiveSingleValueField("dansDataversePid", workFlowVariables.globalId))
+    fields.append(PrimitiveSingleValueField("dansDataversePidVersion", s"${ workFlowVariables.majorVersion }.${ workFlowVariables.minorVersion }"))
+    fields.append(PrimitiveSingleValueField("dansBagId", bagId))
+    fields.append(PrimitiveSingleValueField("dansNbn", nbn))
+    FieldList(fields.toList)
+  }
+
+  private def mintUrnNbn(): String = {
+    trace(())
+    "urn:nbn:" + nbnPrefix + UUID.randomUUID().toString
+  }
+
+  private def mintBagId(): String = {
+    trace(())
+    "urn:uuid:" + UUID.randomUUID().toString
+  }
+
+  private def resumeWorkflow(invocationId: String): Try[Unit] = {
     trace(maxNumberOfRetries, timeBetweenRetries)
     var numberOfTimesTried = 0
     var invocationIdNotFound = true
@@ -80,50 +159,9 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     else Success(())
   }
 
-  /**
-   *
-   * @param resumeResponse
-   * @param invocationId
-   * @return true if resume call returns a 404
-   */
   private def checkForInvocationIdNotFoundError(resumeResponse: Try[DataverseResponse[Nothing]], invocationId: String): Try[Boolean] = {
     resumeResponse.map(_.httpResponse.isError)
       .recover { case e: DataverseException if e.status == HTTP_NOT_FOUND => true }
       .recoverWith { case e: Throwable => Failure(ExternalSystemCallException(s"Resume could not be called for dataset: $invocationId ", e)) }
-  }
-
-  private def editVaultMetadata(): Try[Unit] = {
-    trace(())
-    for {
-      response <- dataset.view(Version.DRAFT)
-      metadata <- response.string
-      vaultBlockOpt <- getVaultBlockOpt(metadata)
-      _ = if (logger.underlying.isDebugEnabled) debug(s"vaultBlockOpt = $vaultBlockOpt")
-      vaultFields <- {
-        val bagId = getVaultFieldValue(vaultBlockOpt, "dansBagId")
-        val urn = getVaultFieldValue(vaultBlockOpt, "dansNbn")
-        mapper.createDataVaultFields(workFlowVariables, bagId, urn)
-      }
-      _ <- dataset.editMetadata(vaultFields, replace = true)
-      _ = debug("editMetadata call returned success. Data Vault Metadata should be added to Dataverse now.")
-    } yield ()
-  }
-
-  private def getVaultFieldValue(vaultBlockOpt: Option[MetadataBlock], fieldId: String): Option[String] = {
-    vaultBlockOpt.flatMap(_.fields.map(_.asInstanceOf[PrimitiveSingleValueField]).find(_.typeName == fieldId)).map(_.value)
-  }
-
-  private def getVaultBlockOpt(metadata: String): Try[Option[MetadataBlock]] = Try {
-    trace(metadata)
-    val vaultBlockJson = JsonMethods.parse(metadata) \\ "dansDataVaultMetadata"
-    if (logger.underlying.isDebugEnabled) debug(Serialization.writePretty(vaultBlockJson))
-    vaultBlockJson match {
-      case JObject(List()) => None
-      case v => Option(v.extract[MetadataBlock])
-    }
-  }
-
-  override def getTarget: WorkFlowVariables = {
-    workFlowVariables
   }
 }
