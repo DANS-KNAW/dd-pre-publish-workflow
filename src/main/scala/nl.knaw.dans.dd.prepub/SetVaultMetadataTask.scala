@@ -55,8 +55,8 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
   private def editVaultMetadata(): Try[Unit] = {
     trace(())
     for {
-      draftDsvJson <- getDatasetVersion2(Version.DRAFT)
-      optLatestPublishedDsvJson <- if (hasLatestPublishedVersion(workFlowVariables)) getDatasetVersion2(Version.LATEST_PUBLISHED).map(Option(_))
+      draftDsvJson <- getDatasetVersion(Version.DRAFT)
+      optLatestPublishedDsvJson <- if (hasLatestPublishedVersion(workFlowVariables)) getDatasetVersion(Version.LATEST_PUBLISHED).map(Option(_))
                                    else Success(None)
       bagId = getBagId(getVaultMetadataFieldValue(draftDsvJson, "dansBagId"), optLatestPublishedDsvJson, workFlowVariables)
       nbn = optLatestPublishedDsvJson
@@ -70,14 +70,7 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     } yield ()
   }
 
-  private def getDatasetVersion(version: Version): Try[DatasetVersion] = {
-    for {
-      response <- dataset.view(version)
-      dsv <- response.data
-    } yield dsv
-  }
-
-  private def getDatasetVersion2(version: Version): Try[JValue] = {
+  private def getDatasetVersion(version: Version): Try[JValue] = {
     for {
       response <- dataset.view(version)
       dsv <- response.json
