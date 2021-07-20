@@ -16,11 +16,12 @@
 package nl.knaw.dans.dd.prepub
 
 import nl.knaw.dans.lib.dataverse.model.ResumeMessage
-import nl.knaw.dans.lib.dataverse.model.dataset.{ DatasetVersion, FieldList, MetadataField, PrimitiveSingleValueField }
+import nl.knaw.dans.lib.dataverse.model.dataset.{ DatasetVersion, FieldList, MetadataBlock, MetadataField, PrimitiveSingleValueField }
 import nl.knaw.dans.lib.dataverse.{ DataverseException, DataverseInstance, DataverseResponse, Version }
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.taskqueue.Task
+import org.json4s.JValue
 
 import java.lang.Thread._
 import java.net.HttpURLConnection._
@@ -54,14 +55,14 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
   private def editVaultMetadata(): Try[Unit] = {
     trace(())
     for {
-      draftDsv <- getDatasetVersion(Version.DRAFT)
-      optLatestPublishedDsv <- if (hasLatestPublishedVersion(workFlowVariables)) getDatasetVersion(Version.LATEST_PUBLISHED).map(Option(_))
-                               else Success(None)
-      bagId = getBagId(getVaultMetadataFieldValue(draftDsv, "dansBagId"), optLatestPublishedDsv, workFlowVariables)
-      nbn = optLatestPublishedDsv
+      draftDsvJson <- getDatasetVersion2(Version.DRAFT)
+      optLatestPublishedDsvJson <- if (hasLatestPublishedVersion(workFlowVariables)) getDatasetVersion2(Version.LATEST_PUBLISHED).map(Option(_))
+                                   else Success(None)
+      bagId = getBagId(getVaultMetadataFieldValue(draftDsvJson, "dansBagId"), optLatestPublishedDsvJson, workFlowVariables)
+      nbn = optLatestPublishedDsvJson
         .map(pdsv => getVaultMetadataFieldValue(pdsv, "dansNbn")
           .getOrElse(throw new IllegalStateException("Found published dataset-version without NBN")))
-        .getOrElse(getVaultMetadataFieldValue(draftDsv, "dansNbn")
+        .getOrElse(getVaultMetadataFieldValue(draftDsvJson, "dansNbn")
           .getOrElse(mintUrnNbn()))
       vaultFieldsToUpdate = createFieldList(workFlowVariables, bagId, nbn)
       _ <- dataset.editMetadata(vaultFieldsToUpdate, replace = true)
@@ -76,7 +77,14 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     } yield dsv
   }
 
-  private def getBagId(optFoundBagId: Option[String], optLatestPublishedDatasetVersion: Option[DatasetVersion], w: WorkFlowVariables): String = {
+  private def getDatasetVersion2(version: Version): Try[JValue] = {
+    for {
+      response <- dataset.view(version)
+      dsv <- response.json
+    } yield dsv
+  }
+
+  private def getBagId(optFoundBagId: Option[String], optLatestPublishedDatasetVersion: Option[JValue], w: WorkFlowVariables): String = {
     trace(optFoundBagId, w)
     optLatestPublishedDatasetVersion.map {
       latestPublishedDsv => { // Draft of version > 1.0
@@ -101,12 +109,16 @@ class SetVaultMetadataTask(workFlowVariables: WorkFlowVariables, dataverse: Data
     }
   }
 
-  private def getVaultMetadataFieldValue(dsv: DatasetVersion, fieldId: String): Option[String] = {
-    dsv.metadataBlocks.get("dansDataVaultMetadata")
-      .flatMap(_.fields
-        .map(_.asInstanceOf[PrimitiveSingleValueField])
-        .find(_.typeName == fieldId))
-      .map(_.value)
+  private def getVaultMetadataFieldValue(dsvJson: JValue, fieldId: String): Option[String] = {
+    val pvmd = (dsvJson \\ "dansDataVaultMetadata")
+    if (pvmd.children.isEmpty) Option.empty
+    else {
+      Try(pvmd.extract[MetadataBlock]).toOption
+        .flatMap(_.fields
+          .map(_.asInstanceOf[PrimitiveSingleValueField])
+          .find(_.typeName == fieldId))
+        .map(_.value)
+    }
   }
 
   private def hasLatestPublishedVersion(w: WorkFlowVariables): Boolean = {
