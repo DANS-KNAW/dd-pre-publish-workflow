@@ -1,3 +1,5 @@
+Replaced by: https://github.com/DANS-KNAW/dd-workflow-step-vault-metadata
+
 dd-pre-publish-workflow
 ===========
 
